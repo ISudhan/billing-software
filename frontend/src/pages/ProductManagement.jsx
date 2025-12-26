@@ -1,0 +1,617 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { getBilingual } from '../utils/translations';
+
+export default function ProductManagement() {
+  const [products, setProducts] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = () => {
+    const mockProducts = [
+      { id: 1, name: 'Rice', nameTamil: 'அரிசி', price: 50, category: 'Groceries', enabled: true, image: null },
+      { id: 2, name: 'Wheat', nameTamil: 'கோதுமை', price: 45, category: 'Groceries', enabled: true, image: null },
+      { id: 3, name: 'Sugar', nameTamil: 'சர்க்கரை', price: 40, category: 'Groceries', enabled: true, image: null },
+      { id: 4, name: 'Tea', nameTamil: 'தேநீர்', price: 250, category: 'Beverages', enabled: true, image: null },
+      { id: 5, name: 'Coffee', nameTamil: 'காபி', price: 350, category: 'Beverages', enabled: true, image: null },
+      { id: 6, name: 'Salt', nameTamil: 'உப்பு', price: 20, category: 'Groceries', enabled: false, image: null },
+    ];
+    setProducts(mockProducts);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert(`Image too large. Max 2MB / படம் மிக பெரியது. அதிகபட்சம் 2MB`);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        if (editingProduct) {
+          setEditingProduct({ ...editingProduct, image: reader.result });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEdit = (product) => {
+    setEditingProduct({ ...product });
+    setImagePreview(product.image);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    if (!editingProduct.name || !editingProduct.nameTamil || !editingProduct.price) {
+      alert(`${getBilingual('Please fill all fields')}`);
+      return;
+    }
+
+    if (editingProduct.price <= 0) {
+      alert(`Price must be positive / விலை நேர்மறையாக இருக்க வேண்டும்`);
+      return;
+    }
+
+    if (window.confirm(`${getBilingual('Update product')}?`)) {
+      setProducts(products.map(p =>
+        p.id === editingProduct.id ? editingProduct : p
+      ));
+      setIsEditing(false);
+      setEditingProduct(null);
+      setImagePreview(null);
+      alert(`${getBilingual('Success')}!`);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditingProduct(null);
+    setImagePreview(null);
+  };
+
+  const handleDelete = (product) => {
+    if (window.confirm(`${getBilingual('Delete')} "${product.name}"?`)) {
+      if (window.confirm(`${getBilingual('Are you absolutely sure')}? ${getBilingual('This cannot be undone')}.`)) {
+        setProducts(products.filter(p => p.id !== product.id));
+        alert(`${getBilingual('Product deleted successfully')}`);
+      }
+    }
+  };
+
+  const toggleEnabled = (product) => {
+    const action = product.enabled ? 'disable' : 'enable';
+    const actionTamil = product.enabled ? 'முடக்கு' : 'செயல்படுத்து';
+    
+    if (window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} "${product.name}"? / ${actionTamil} "${product.nameTamil}"?`)) {
+      setProducts(products.map(p =>
+        p.id === product.id ? { ...p, enabled: !p.enabled } : p
+      ));
+    }
+  };
+
+  const handleAddProduct = () => {
+    const newProduct = {
+      id: Date.now(),
+      name: '',
+      nameTamil: '',
+      price: 0,
+      category: 'Groceries',
+      enabled: true,
+      image: null,
+    };
+    setEditingProduct(newProduct);
+    setImagePreview(null);
+    setShowAddForm(true);
+  };
+
+  const handleSaveNewProduct = () => {
+    if (!editingProduct.name || !editingProduct.nameTamil || !editingProduct.price) {
+      alert(`${getBilingual('Please fill all fields')}`);
+      return;
+    }
+
+    if (editingProduct.price <= 0) {
+      alert(`Price must be positive / விலை நேர்மறையாக இருக்க வேண்டும்`);
+      return;
+    }
+
+    setProducts([...products, editingProduct]);
+    setShowAddForm(false);
+    setEditingProduct(null);
+    setImagePreview(null);
+    alert(`${getBilingual('Product added successfully')}`);
+  };
+
+  const handleCancelAdd = () => {
+    setShowAddForm(false);
+    setEditingProduct(null);
+    setImagePreview(null);
+  };
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h1 style={styles.title}>{getBilingual('Product Management')}</h1>
+        <button onClick={handleAddProduct} style={styles.addBtn}>
+          <Plus size={20} />
+          {getBilingual('Add Product')}
+        </button>
+      </div>
+
+      {(showAddForm || isEditing) && editingProduct && (
+        <div style={styles.editForm}>
+          <h3 style={styles.formTitle}>
+            {showAddForm ? getBilingual('Add Product') : getBilingual('Edit Product')}
+          </h3>
+          
+          <div style={styles.formGrid}>
+            <div style={styles.imageSection}>
+              <div style={styles.imageUploadArea}>
+                {imagePreview ? (
+                  <div style={styles.imagePreviewContainer}>
+                    <img src={imagePreview} alt="Product" style={styles.imagePreview} />
+                    <button
+                      onClick={() => {
+                        setImagePreview(null);
+                        setEditingProduct({ ...editingProduct, image: null });
+                      }}
+                      style={styles.removeImageBtn}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <label style={styles.uploadLabel}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={styles.fileInput}
+                    />
+                    <ImageIcon size={48} color="#9ca3af" />
+                    <div style={styles.uploadText}>{getBilingual('Upload Image')}</div>
+                    <div style={styles.uploadHint}>Max 2MB / அதிகபட்சம் 2MB</div>
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div style={styles.formFields}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>{getBilingual('Product Name')} *</label>
+                <input
+                  type="text"
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  style={styles.input}
+                  placeholder="e.g., Rice"
+                />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>{getBilingual('Tamil Name')} *</label>
+                <input
+                  type="text"
+                  value={editingProduct.nameTamil}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, nameTamil: e.target.value })}
+                  style={styles.input}
+                  placeholder="e.g., அரிசி"
+                  className="tamil-text"
+                />
+              </div>
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>{getBilingual('Price')} (₹) *</label>
+                  <input
+                    type="number"
+                    value={editingProduct.price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                    style={styles.input}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>{getBilingual('Category')}</label>
+                  <select
+                    value={editingProduct.category}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                    style={styles.input}
+                  >
+                    <option value="Groceries">Groceries</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={styles.formActions}>
+                <button
+                  onClick={showAddForm ? handleSaveNewProduct : handleSave}
+                  style={styles.saveBtn}
+                >
+                  <Save size={18} />
+                  {getBilingual('Save')}
+                </button>
+                <button
+                  onClick={showAddForm ? handleCancelAdd : handleCancel}
+                  style={styles.cancelBtn}
+                >
+                  <X size={18} />
+                  {getBilingual('Cancel')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={styles.productsGrid}>
+        {products.map(product => (
+          <div key={product.id} style={styles.productCard}>
+            {product.image ? (
+              <img src={product.image} alt={product.name} style={styles.cardImage} />
+            ) : (
+              <div style={styles.cardImagePlaceholder}>
+                <ImageIcon size={40} color="#d1d5db" />
+              </div>
+            )}
+            
+            <div style={styles.cardContent}>
+              <div style={styles.cardHeader}>
+                <div>
+                  <h3 style={styles.productName}>{product.name}</h3>
+                  <p style={styles.productNameTamil} className="tamil-text">{product.nameTamil}</p>
+                </div>
+                <span style={{
+                  ...styles.statusBadge,
+                  backgroundColor: product.enabled ? '#dcfce7' : '#fee2e2',
+                  color: product.enabled ? '#15803d' : '#b91c1c',
+                }}>
+                  {product.enabled ? getBilingual('Active') : getBilingual('Disabled')}
+                </span>
+              </div>
+
+              <div style={styles.cardDetails}>
+                <div style={styles.priceRow}>
+                  <span style={styles.priceLabel}>{getBilingual('Price')}:</span>
+                  <span style={styles.price}>₹{product.price}</span>
+                </div>
+                <div style={styles.categoryRow}>
+                  <span style={styles.categoryLabel}>{getBilingual('Category')}:</span>
+                  <span style={styles.category}>{product.category}</span>
+                </div>
+              </div>
+
+              <div style={styles.cardActions}>
+                <button onClick={() => handleEdit(product)} style={styles.editBtn}>
+                  <Edit size={16} />
+                  {getBilingual('Edit')}
+                </button>
+                <button
+                  onClick={() => toggleEnabled(product)}
+                  style={{
+                    ...styles.toggleBtn,
+                    backgroundColor: product.enabled ? '#fef3c7' : '#dcfce7',
+                    color: product.enabled ? '#92400e' : '#15803d',
+                  }}
+                >
+                  {product.enabled ? getBilingual('Disable') : getBilingual('Enable')}
+                </button>
+                <button onClick={() => handleDelete(product)} style={styles.deleteBtn}>
+                  <Trash2 size={16} />
+                  {getBilingual('Delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {products.length === 0 && (
+        <div style={styles.emptyState}>
+          <p>{getBilingual('No products found')}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    maxWidth: '1400px',
+    margin: '0 auto',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '2rem',
+  },
+  title: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  addBtn: {
+    padding: '1rem 1.5rem',
+    backgroundColor: '#2563eb',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '16px',
+    fontWeight: '600',
+  },
+  editForm: {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '12px',
+    marginBottom: '2rem',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  },
+  formTitle: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginBottom: '1.5rem',
+    color: '#1f2937',
+  },
+  formGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 2fr',
+    gap: '2rem',
+  },
+  imageSection: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  imageUploadArea: {
+    border: '2px dashed #d1d5db',
+    borderRadius: '8px',
+    padding: '2rem',
+    textAlign: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  uploadLabel: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.75rem',
+    cursor: 'pointer',
+  },
+  fileInput: {
+    display: 'none',
+  },
+  uploadText: {
+    fontSize: '16px',
+    fontWeight: '500',
+    color: '#4b5563',
+  },
+  uploadHint: {
+    fontSize: '13px',
+    color: '#9ca3af',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    maxHeight: '300px',
+    objectFit: 'contain',
+    borderRadius: '8px',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: '0.5rem',
+    right: '0.5rem',
+    padding: '0.5rem',
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  formFields: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem',
+  },
+  formGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  },
+  formRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '1rem',
+  },
+  label: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#374151',
+  },
+  input: {
+    padding: '0.875rem',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    fontSize: '15px',
+  },
+  formActions: {
+    display: 'flex',
+    gap: '1rem',
+    marginTop: '0.5rem',
+  },
+  saveBtn: {
+    padding: '1rem 1.75rem',
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '16px',
+    fontWeight: '600',
+  },
+  cancelBtn: {
+    padding: '1rem 1.75rem',
+    backgroundColor: '#6b7280',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '16px',
+    fontWeight: '600',
+  },
+  productsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gap: '1.5rem',
+  },
+  productCard: {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  },
+  cardImagePlaceholder: {
+    width: '100%',
+    height: '180px',
+    backgroundColor: '#f3f4f6',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardImage: {
+    width: '100%',
+    height: '180px',
+    objectFit: 'cover',
+  },
+  cardContent: {
+    padding: '1.25rem',
+  },
+  cardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'start',
+    marginBottom: '1rem',
+  },
+  productName: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: '0.25rem',
+  },
+  productNameTamil: {
+    fontSize: '14px',
+    color: '#6b7280',
+  },
+  statusBadge: {
+    padding: '0.375rem 0.875rem',
+    borderRadius: '9999px',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+  cardDetails: {
+    marginBottom: '1rem',
+  },
+  priceRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '0.5rem',
+  },
+  priceLabel: {
+    fontSize: '14px',
+    color: '#6b7280',
+  },
+  price: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#2563eb',
+  },
+  categoryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  categoryLabel: {
+    fontSize: '14px',
+    color: '#6b7280',
+  },
+  category: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#4b5563',
+  },
+  cardActions: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  editBtn: {
+    flex: 1,
+    padding: '0.75rem',
+    backgroundColor: '#dbeafe',
+    color: '#1e40af',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  toggleBtn: {
+    flex: 1,
+    padding: '0.75rem',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  deleteBtn: {
+    flex: 1,
+    padding: '0.75rem',
+    backgroundColor: '#fee2e2',
+    color: '#dc2626',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '4rem',
+    color: '#9ca3af',
+    fontSize: '16px',
+  },
+};

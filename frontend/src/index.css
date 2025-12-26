@@ -1,0 +1,498 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* POS Color Scheme - Premium Blue */
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #dbeafe;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --success-hover: #059669;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --warning-color: #f59e0b;
+  
+  /* Neutral Palette */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1e293b;
+  --bg-sidebar-hover: #334155;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e1;
+  
+  /* Shadows - Subtle & Professional */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Spacing System */
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Tamil Font Support */
+.tamil-text {
+  font-family: 'Noto Sans Tamil', 'Lohit Tamil', sans-serif;
+  font-weight: 500;
+}
+
+/* POS Button System */
+.btn {
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: var(--success-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-main);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* POS Card System */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.card-hover {
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.card-hover:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+}
+
+.card-hover:active {
+  transform: translateY(0);
+}
+
+/* Product Card - POS Style */
+.product-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 200px;
+}
+
+.product-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.product-card:active {
+  transform: scale(0.98);
+}
+
+/* Input Fields */
+input, select, textarea {
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+input:disabled, select:disabled, textarea:disabled {
+  background-color: var(--bg-main);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Typography */
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Main Content Area */
+main {
+  padding: var(--space-xl);
+  transition: margin-left var(--transition-base);
+}
+
+/* Responsive - Desktop (Sidebar Always Visible) */
+@media (min-width: 1025px) {
+  main {
+    margin-left: 260px;
+  }
+  
+  .menu-button {
+    display: none !important;
+  }
+  
+  .sidebar {
+    transform: translateX(0) !important;
+    position: fixed !important;
+    left: 0 !important;
+  }
+}
+
+/* Responsive - Tablet & Mobile (Hamburger Menu) */
+@media (max-width: 1024px) {
+  .menu-button {
+    display: block !important;
+  }
+  
+  main {
+    margin-left: 0 !important;
+    padding-top: 5rem !important;
+  }
+  
+  .sidebar {
+    position: fixed !important;
+    z-index: 1000 !important;
+  }
+  
+  h1 {
+    font-size: 28px;
+  }
+  
+  h2 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 768px) {
+  main {
+    padding: var(--space-md);
+  }
+  
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 15px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .product-card {
+    min-height: 180px;
+  }
+}
+
+/* POS Billing Layout - Desktop */
+@media (min-width: 1025px) {
+  .billing-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 400px !important;
+    gap: var(--space-lg) !important;
+    align-items: start !important;
+  }
+}
+
+/* POS Billing Layout - Mobile */
+@media (max-width: 1024px) {
+  .billing-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-lg) !important;
+  }
+}
+
+/* Bill Panel Sticky on Desktop */
+@media (min-width: 1025px) {
+  .bill-panel-sticky {
+    position: sticky !important;
+    top: var(--space-lg) !important;
+    max-height: calc(100vh - 3rem) !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  @page {
+    margin: 0;
+  }
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
+
+.mt-sm {
+  margin-top: var(--space-sm);
+}
+
+.mt-md {
+  margin-top: var(--space-md);
+}
+
+.mt-lg {
+  margin-top: var(--space-lg);
+}
+
+.mb-sm {
+  margin-bottom: var(--space-sm);
+}
+
+.mb-md {
+  margin-bottom: var(--space-md);
+}
+
+.mb-lg {
+  margin-bottom: var(--space-lg);
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-primary {
+  background-color: var(--primary-light);
+  color: #1e40af;
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Smooth Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* Overlay for Mobile Sidebar */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn var(--transition-base);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
