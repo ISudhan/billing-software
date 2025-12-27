@@ -34,14 +34,14 @@ const seedDatabase = async () => {
     console.log(`✅ Admin created: ${admin.username}`);
 
     // Create sample staff user
-    console.log('👤 Creating staff user...');
-    const staff = await User.create({
-      username: 'staff1',
-      password: 'staff123',
-      name: 'Staff Member',
-      role: 'STAFF',
+    console.log('👤 Creating cashier user...');
+    const cashier = await User.create({
+      username: 'cashier1',
+      password: 'cashier123',
+      name: 'Cashier Member',
+      role: 'CASHIER',
     });
-    console.log(`✅ Staff created: ${staff.username}`);
+    console.log(`✅ Cashier created: ${cashier.username}`);
 
     // Create sample products
     console.log('📦 Creating sample products...');
@@ -132,9 +132,9 @@ const seedDatabase = async () => {
     console.log(`║   Username: ${config.admin.username.padEnd(30)} ║`);
     console.log(`║   Password: ${config.admin.password.padEnd(30)} ║`);
     console.log('║                                            ║');
-    console.log('║   Staff Credentials:                       ║');
-    console.log('║   Username: staff1                         ║');
-    console.log('║   Password: staff123                       ║');
+    console.log('║   Cashier Credentials:                     ║');
+    console.log('║   Username: cashier1                       ║');
+    console.log('║   Password: cashier123                     ║');
     console.log('╚════════════════════════════════════════════╝\n');
 
     process.exit(0);

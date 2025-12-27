@@ -70,7 +70,7 @@ export const labels = {
   'Enabled': 'இயக்கப்பட்டது',
   'Disabled': 'நிறுத்தப்பட்டது',
   
-  // Staff
+  // Staff/Cashier
   'Add Staff': 'பணியாளர் சேர்',
   'Staff Name': 'பணியாளர் பெயர்',
   'Username': 'பயனர் பெயர்',
@@ -78,6 +78,7 @@ export const labels = {
   'Role': 'பங்கு',
   'Admin': 'நிர்வாகி',
   'Staff': 'பணியாளர்',
+  'Cashier': 'காசாளர்',
   
   // Reports
   'Daily Sales': 'தினசரி விற்பனை',

@@ -8,13 +8,20 @@ import { Plus, Minus, Trash2, ShoppingCart, Image as ImageIcon, AlertCircle } fr
 
 export default function BillingScreen() {
   const { user } = useAuth();
-  const { products, categories: productCategories, loading: productsLoading, error: productsError } = useProducts();
+  const { products, categories: productCategories, loading: productsLoading, error: productsError, refreshProducts } = useProducts();
   const { language } = useLanguage();
   const navigate = useNavigate();
   
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+
+  // Load products on mount if not already loaded
+  useEffect(() => {
+    if (products.length === 0 && !productsLoading && !productsError) {
+      refreshProducts();
+    }
+  }, []);
 
   // Categories for filtering
   const categories = ['ALL', ...productCategories];

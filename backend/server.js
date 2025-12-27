@@ -16,6 +16,7 @@ const productRoutes = require('./routes/productRoutes');
 const billRoutes = require('./routes/billRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const staffPaymentRoutes = require('./routes/staffPaymentRoutes');
 
 // Initialize express app
 const app = express();
@@ -74,6 +75,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/bills', billRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/staff-payments', staffPaymentRoutes);
 
 // 404 handler
 app.use(notFound);

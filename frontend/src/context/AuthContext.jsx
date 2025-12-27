@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 
 export const ROLES = {
   ADMIN: 'ADMIN',
-  STAFF: 'STAFF',
+  CASHIER: 'CASHIER',
 };
 
 export const AuthProvider = ({ children }) => {
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => hasRole(ROLES.ADMIN);
-  const isStaff = () => hasRole(ROLES.STAFF);
+  const isCashier = () => hasRole(ROLES.CASHIER);
 
   const value = {
     user,
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     hasRole,
     isAdmin,
-    isStaff,
+    isCashier,
     loading,
   };
 

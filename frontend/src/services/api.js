@@ -230,4 +230,57 @@ export const settingsAPI = {
   },
 };
 
+// =========================
+// STAFF PAYMENT APIs (Admin only)
+// =========================
+export const staffPaymentAPI = {
+  // Create work record
+  createWorkRecord: async (data) => {
+    const response = await api.post('/staff-payments', data);
+    return response.data;
+  },
+
+  // Get all work records
+  getWorkRecords: async (params = {}) => {
+    const response = await api.get('/staff-payments', { params });
+    return response.data;
+  },
+
+  // Get single work record
+  getWorkRecord: async (id) => {
+    const response = await api.get(`/staff-payments/${id}`);
+    return response.data;
+  },
+
+  // Update work record
+  updateWorkRecord: async (id, data) => {
+    const response = await api.put(`/staff-payments/${id}`, data);
+    return response.data;
+  },
+
+  // Add payment to record
+  addPayment: async (id, amount) => {
+    const response = await api.post(`/staff-payments/${id}/payment`, { amount });
+    return response.data;
+  },
+
+  // Get staff summary
+  getStaffSummary: async (staffId, params = {}) => {
+    const response = await api.get(`/staff-payments/staff/${staffId}/summary`, { params });
+    return response.data;
+  },
+
+  // Delete work record
+  deleteWorkRecord: async (id) => {
+    const response = await api.delete(`/staff-payments/${id}`);
+    return response.data;
+  },
+
+  // Get payment statistics
+  getPaymentStats: async (params = {}) => {
+    const response = await api.get('/staff-payments/stats', { params });
+    return response.data;
+  },
+};
+
 export default api;

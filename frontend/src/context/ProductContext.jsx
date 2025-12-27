@@ -6,20 +6,27 @@ const ProductContext = createContext(null);
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch products on mount
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  // Don't load on mount - let individual pages trigger loadProducts when needed
+  // This prevents 401 errors before user logs in
 
   const loadProducts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch products from backend - staff sees active only, admin sees all
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setProducts([]);
+        setCategories([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch products from backend - cashier sees active only, admin sees all
       const response = await productAPI.getProducts({ isActive: true });
       setProducts(response.products || []);
 

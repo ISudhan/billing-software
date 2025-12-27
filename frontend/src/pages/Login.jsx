@@ -88,7 +88,7 @@ export default function Login() {
             <strong>{getText('Admin', language)}:</strong> admin / admin123
           </div>
           <div style={styles.demoItem}>
-            <strong>{getText('Staff', language)}:</strong> staff1 / staff123
+            <strong>{getText('Cashier', language)}:</strong> cashier1 / cashier123
           </div>
         </div>
       </div>

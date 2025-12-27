@@ -8,7 +8,7 @@ const {
   updateProduct,
   deleteProduct,
 } = require('../controllers/productController');
-const { protect, isAdmin } = require('../middleware/auth');
+const { protect, isAdmin, restrictTo } = require('../middleware/auth');
 const {
   createProductValidation,
   updateProductValidation,
@@ -20,9 +20,11 @@ router.get('/', protect, getProducts);
 router.get('/categories', protect, getCategories);
 router.get('/:id', protect, getProduct);
 
-// Admin-only routes
-router.post('/', protect, isAdmin, createProductValidation, validate, createProduct);
-router.put('/:id', protect, isAdmin, updateProductValidation, validate, updateProduct);
+// Cashier and Admin can create/update products
+router.post('/', protect, restrictTo('ADMIN', 'CASHIER'), createProductValidation, validate, createProduct);
+router.put('/:id', protect, restrictTo('ADMIN', 'CASHIER'), updateProductValidation, validate, updateProduct);
+
+// Only Admin can delete products
 router.delete('/:id', protect, isAdmin, deleteProduct);
 
 module.exports = router;

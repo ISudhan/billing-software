@@ -30,11 +30,12 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const isActive = (path) => location.pathname === path;
 
-  // Staff menu items - BILLING ONLY
-  const staffMenuItems = [
+  // Cashier menu items - BILLING + PRODUCTS
+  const cashierMenuItems = [
     { path: '/', icon: Home, label: getText('Home', language) },
     { path: '/billing', icon: ShoppingCart, label: getText('New Bill', language) },
     { path: '/bill-history', icon: FileText, label: getText('My Bills', language) },
+    { path: '/products', icon: Package, label: getText('Product Management', language) },
   ];
 
   // Admin menu items - FULL ACCESS
@@ -48,7 +49,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { path: '/settings', icon: Settings, label: getText('Settings', language) },
   ];
 
-  const menuItems = user?.role === ROLES.ADMIN ? adminMenuItems : staffMenuItems;
+  const menuItems = user?.role === ROLES.ADMIN ? adminMenuItems : cashierMenuItems;
 
   return (
     <>

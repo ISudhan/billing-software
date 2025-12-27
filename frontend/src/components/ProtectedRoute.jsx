@@ -30,11 +30,11 @@ export const AdminRoute = ({ children }) => {
   return <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>{children}</ProtectedRoute>;
 };
 
-export const StaffRoute = ({ children }) => {
-  return <ProtectedRoute allowedRoles={[ROLES.STAFF]}>{children}</ProtectedRoute>;
+export const CashierRoute = ({ children }) => {
+  return <ProtectedRoute allowedRoles={[ROLES.CASHIER]}>{children}</ProtectedRoute>;
 };
 
 export const BillingRoute = ({ children }) => {
-  // Both Admin and Staff can access billing
-  return <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}>{children}</ProtectedRoute>;
+  // Both Admin and Cashier can access billing and products
+  return <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.CASHIER]}>{children}</ProtectedRoute>;
 };

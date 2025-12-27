@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProductProvider } from './context/ProductContext';
-import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, AdminRoute, BillingRoute } from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
 // Pages
@@ -74,15 +74,15 @@ function App() {
             }
           />
 
-          {/* Admin-Only Routes */}
+          {/* Admin and Cashier Routes - Product Management */}
           <Route
             path="/products"
             element={
-              <AdminRoute>
+              <BillingRoute>
                 <Layout>
                   <ProductManagement />
                 </Layout>
-              </AdminRoute>
+              </BillingRoute>
             }
           />
           <Route

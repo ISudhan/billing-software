@@ -4,10 +4,12 @@ import { useLanguage } from '../components/Layout';
 import { getText } from '../utils/translations';
 import { productAPI } from '../services/api';
 import { useProducts } from '../context/ProductContext';
+import { useAuth, ROLES } from '../context/AuthContext';
 
 export default function ProductManagement() {
   const { language } = useLanguage();
   const { products: contextProducts, loading, error, refreshProducts } = useProducts();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -20,6 +22,13 @@ export default function ProductManagement() {
       setProducts(contextProducts);
     }
   }, [contextProducts]);
+
+  // Load products on mount if not already loaded
+  useEffect(() => {
+    if (contextProducts.length === 0 && !loading && !error) {
+      refreshProducts();
+    }
+  }, []);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -361,10 +370,12 @@ export default function ProductManagement() {
                 >
                   {product.enabled ? getText('Disable', language) : getText('Enable', language)}
                 </button>
-                <button onClick={() => handleDelete(product)} style={styles.deleteBtn}>
-                  <Trash2 size={16} />
-                  {getText('Delete', language)}
-                </button>
+                {user?.role === ROLES.ADMIN && (
+                  <button onClick={() => handleDelete(product)} style={styles.deleteBtn}>
+                    <Trash2 size={16} />
+                    {getText('Delete', language)}
+                  </button>
+                )}
               </div>
             </div>
           </div>
