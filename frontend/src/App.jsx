@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ProductProvider } from './context/ProductContext';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -19,11 +20,17 @@ import StaffManagement from './pages/StaffManagement';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
+      <ProductProvider>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Protected Routes - All authenticated users */}
           <Route
@@ -113,6 +120,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </ProductProvider>
     </AuthProvider>
   );
 }

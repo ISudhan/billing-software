@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { billAPI } from '../services/api';
 import { getText, getBilingual } from '../utils/translations';
 import { Printer, CheckCircle, CreditCard, Banknote, QrCode } from 'lucide-react';
 import QRCode from 'qrcode.react';
@@ -12,12 +13,13 @@ export default function PaymentScreen() {
   const printRef = useRef();
   const [language, setLanguage] = useState('en');
 
-  const { cart, total } = location.state || { cart: [], total: 0 };
+  const { cart } = location.state || { cart: [] };
   
   const [paymentMode, setPaymentMode] = useState('CASH');
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [billSaved, setBillSaved] = useState(false);
-  const [billNumber, setBillNumber] = useState(null);
+  const [billData, setBillData] = useState(null);
   const [printError, setPrintError] = useState(null);
 
   if (cart.length === 0) {
@@ -25,31 +27,37 @@ export default function PaymentScreen() {
     return null;
   }
 
-  const handlePaymentConfirm = async () => {
-    // Save bill
-    const bill = {
-      id: Date.now(),
-      billNumber: `BILL-${Date.now()}`,
-      items: cart,
-      total,
-      paymentMode,
-      createdBy: user.id,
-      createdByName: user.name,
-      createdAt: new Date().toISOString(),
-      status: 'PAID',
-    };
+  // Calculate display total (backend will recalculate)
+  const displayTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Mock API call to save bill
+  const handlePaymentConfirm = async () => {
     try {
-      // In production: await saveBillAPI(bill);
-      setBillNumber(bill.billNumber);
+      setIsSaving(true);
+      setPrintError(null);
+
+      // Prepare bill data for backend
+      const billPayload = {
+        items: cart.map(item => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+        paymentMode,
+      };
+
+      // Create bill via backend API - backend calculates totals
+      const response = await billAPI.createBill(billPayload);
+      
+      // Store backend-calculated bill data
+      setBillData(response.bill);
       setBillSaved(true);
-      sessionStorage.removeItem('currentBill');
       
       // Auto print
       setTimeout(() => handlePrint(), 500);
     } catch (error) {
-      alert(`${getText('Failed to save', language)} / சேமிக்க தவறிவிட்டது. ${getText('Try again', language)}.`);
+      console.error('Failed to save bill:', error);
+      alert(error.message || `${getText('Failed to save', language)} / சேமிக்க தவறிவிட்டது. ${getText('Try again', language)}.`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -106,7 +114,7 @@ export default function PaymentScreen() {
             {paymentMode === 'UPI' && (
               <div style={styles.qrSection}>
                 <p style={styles.qrLabel}>Scan to Pay</p>
-                <QRCode value={`upi://pay?pa=merchant@upi&pn=Senthur&am=${total}&cu=INR`} size={200} />
+                <QRCode value={`upi://pay?pa=merchant@upi&pn=Senthur&am=${displayTotal}&cu=INR`} size={200} />
               </div>
             )}
 
@@ -117,12 +125,16 @@ export default function PaymentScreen() {
               </div>
               <div style={styles.summaryRow}>
                 <span>Total Amount:</span>
-                <span style={styles.totalAmount}>₹{total}</span>
+                <span style={styles.totalAmount}>₹{displayTotal.toFixed(2)}</span>
               </div>
             </div>
 
-            <button onClick={handlePaymentConfirm} style={styles.confirmBtn}>
-              {getText('Confirm Payment', language)}
+            <button 
+              onClick={handlePaymentConfirm} 
+              style={styles.confirmBtn}
+              disabled={isSaving}
+            >
+              {isSaving ? getText('Saving...', language) : getText('Confirm Payment', language)}
             </button>
           </div>
         </div>
@@ -130,7 +142,7 @@ export default function PaymentScreen() {
         <div style={styles.successSection}>
           <CheckCircle size={64} color="#10b981" />
           <h1 style={styles.successTitle}>{getText('Payment Successful', language)}!</h1>
-          <p style={styles.billNumberText}>{getText('Bill Number', language)}: {billNumber}</p>
+          <p style={styles.billNumberText}>{getText('Bill Number', language)}: {billData?.billNumber}</p>
 
           {printError && (
             <div style={styles.errorBox}>
@@ -164,8 +176,8 @@ export default function PaymentScreen() {
           </div>
 
           <div style={styles.printInfo}>
-            <p>Bill No: {billNumber}</p>
-            <p>Date: {new Date().toLocaleString()}</p>
+            <p>Bill No: {billData?.billNumber}</p>
+            <p>Date: {billData ? new Date(billData.createdAt).toLocaleString() : new Date().toLocaleString()}</p>
             <p>Cashier: {user.name}</p>
             <p>Payment: {paymentMode}</p>
           </div>
@@ -180,22 +192,22 @@ export default function PaymentScreen() {
               </tr>
             </thead>
             <tbody>
-              {cart.map((item, index) => (
+              {(billData?.items || cart).map((item, index) => (
                 <tr key={index}>
                   <td style={styles.printTd}>
                     {item.name}<br/>
                     <span className="tamil-text" style={styles.tamilText}>{item.nameTamil}</span>
                   </td>
                   <td style={styles.printTd}>{item.quantity}</td>
-                  <td style={styles.printTd}>₹{item.price}</td>
-                  <td style={styles.printTd}>₹{item.price * item.quantity}</td>
+                  <td style={styles.printTd}>₹{item.price?.toFixed(2)}</td>
+                  <td style={styles.printTd}>₹{item.subtotal?.toFixed(2) || (item.price * item.quantity).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
           <div style={styles.printTotal}>
-            <strong>Total: ₹{total}</strong>
+            <strong>Total: ₹{billData?.total?.toFixed(2) || displayTotal.toFixed(2)}</strong>
           </div>
 
           <div style={styles.printFooter}>

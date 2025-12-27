@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../components/Layout';
 import { getText } from '../utils/translations';
+import { billAPI } from '../services/api';
 import { Eye, Printer, Search } from 'lucide-react';
 
 export default function BillHistory() {
@@ -12,51 +13,52 @@ export default function BillHistory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBill, setSelectedBill] = useState(null);
   const [dateFilter, setDateFilter] = useState('TODAY');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadBills();
-  }, []);
+  }, [dateFilter]);
 
   useEffect(() => {
     filterBills();
-  }, [searchTerm, dateFilter, bills]);
+  }, [searchTerm, bills]);
 
-  const loadBills = () => {
-    // Mock bills data
-    const mockBills = [
-      {
-        id: 1,
-        billNumber: 'BILL-1734960000001',
-        items: [
-          { name: 'Rice', nameTamil: 'அரிசி', quantity: 2, price: 50 },
-          { name: 'Sugar', nameTamil: 'சர்க்கரை', quantity: 1, price: 40 },
-        ],
-        total: 140,
-        paymentMode: 'CASH',
-        createdBy: user.id,
-        createdByName: user.name,
-        createdAt: new Date().toISOString(),
-        status: 'PAID',
-      },
-      {
-        id: 2,
-        billNumber: 'BILL-1734960000002',
-        items: [
-          { name: 'Tea', nameTamil: 'தேநீர்', quantity: 1, price: 250 },
-          { name: 'Coffee', nameTamil: 'காபி', quantity: 1, price: 350 },
-        ],
-        total: 600,
-        paymentMode: 'UPI',
-        createdBy: user.id,
-        createdByName: user.name,
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-        status: 'PAID',
-      },
-    ];
-
-    // Staff can only see their own bills
-    const userBills = isAdmin() ? mockBills : mockBills.filter(b => b.createdBy === user.id);
-    setBills(userBills);
+  const loadBills = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Calculate date range based on filter
+      let startDate, endDate;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (dateFilter === 'TODAY') {
+        startDate = today.toISOString();
+        endDate = new Date(today.getTime() + 86400000).toISOString(); // +1 day
+      } else if (dateFilter === 'WEEK') {
+        const weekAgo = new Date(today.getTime() - 7 * 86400000);
+        startDate = weekAgo.toISOString();
+        endDate = new Date().toISOString();
+      } else if (dateFilter === 'MONTH') {
+        const monthAgo = new Date(today.getTime() - 30 * 86400000);
+        startDate = monthAgo.toISOString();
+        endDate = new Date().toISOString();
+      } else {
+        // ALL - no date filter
+        startDate = null;
+        endDate = null;
+      }
+      
+      const response = await billAPI.getBills({ startDate, endDate });
+      setBills(response.bills || []);
+    } catch (err) {
+      console.error('Failed to load bills:', err);
+      setError(err.message || 'Failed to load bills');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filterBills = () => {
@@ -66,20 +68,8 @@ export default function BillHistory() {
     if (searchTerm) {
       filtered = filtered.filter(bill =>
         bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bill.createdByName.toLowerCase().includes(searchTerm.toLowerCase())
+        bill.createdBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-
-    // Date filter
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (dateFilter === 'TODAY') {
-      filtered = filtered.filter(bill => {
-        const billDate = new Date(bill.createdAt);
-        billDate.setHours(0, 0, 0, 0);
-        return billDate.getTime() === today.getTime();
-      });
     }
 
     setFilteredBills(filtered);
@@ -122,16 +112,34 @@ export default function BillHistory() {
           style={styles.select}
         >
           <option value="TODAY">{getText('TODAY', language)}</option>
+          <option value="WEEK">{getText('This Week', language)}</option>
+          <option value="MONTH">{getText('This Month', language)}</option>
           <option value="ALL">{getText('ALL', language)}</option>
         </select>
       </div>
 
+      {loading && (
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingText}>{getText('Loading bills...', language)}</div>
+        </div>
+      )}
+
+      {error && (
+        <div style={styles.errorContainer}>
+          <p style={styles.errorText}>{error}</p>
+          <button onClick={loadBills} style={styles.retryBtn}>
+            {getText('Retry', language)}
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && (
       <div style={styles.billsGrid}>
         {filteredBills.length === 0 ? (
           <div style={styles.noBills}>{getText('No bills found', language)}</div>
         ) : (
           filteredBills.map(bill => (
-            <div key={bill.id} style={styles.billCard}>
+            <div key={bill._id} style={styles.billCard}>
               <div style={styles.billHeader}>
                 <div style={styles.billNumber}>{bill.billNumber}</div>
                 <div style={styles.billStatus}>{bill.status}</div>
@@ -144,7 +152,7 @@ export default function BillHistory() {
                 </div>
                 <div style={styles.infoRow}>
                   <span>{getText('Cashier', language)}:</span>
-                  <span>{bill.createdByName}</span>
+                  <span>{bill.createdBy?.name || 'N/A'}</span>
                 </div>
                 <div style={styles.infoRow}>
                   <span>{getText('items', language)}:</span>
@@ -157,7 +165,7 @@ export default function BillHistory() {
               </div>
 
               <div style={styles.billTotal}>
-                {getText('Total Amount', language)}: ₹{bill.total}
+                {getText('Total Amount', language)}: ₹{bill.total.toFixed(2)}
               </div>
 
               <div style={styles.billActions}>
@@ -174,6 +182,7 @@ export default function BillHistory() {
           ))
         )}
       </div>
+      )}
 
       {/* Bill Details Modal */}
       {selectedBill && (
@@ -197,7 +206,7 @@ export default function BillHistory() {
               </div>
               <div style={styles.detailRow}>
                 <strong>Cashier:</strong>
-                <span>{selectedBill.createdByName}</span>
+                <span>{selectedBill.createdBy?.name || 'N/A'}</span>
               </div>
               <div style={styles.detailRow}>
                 <strong>Payment Mode:</strong>
@@ -224,15 +233,15 @@ export default function BillHistory() {
                         </span>
                       </td>
                       <td style={styles.tableTd}>{item.quantity}</td>
-                      <td style={styles.tableTd}>₹{item.price}</td>
-                      <td style={styles.tableTd}>₹{item.price * item.quantity}</td>
+                      <td style={styles.tableTd}>₹{item.price.toFixed(2)}</td>
+                      <td style={styles.tableTd}>₹{item.subtotal.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
               <div style={styles.modalTotal}>
-                <strong>Total: ₹{selectedBill.total}</strong>
+                <strong>Total: ₹{selectedBill.total.toFixed(2)}</strong>
               </div>
             </div>
 
@@ -535,5 +544,35 @@ const styles = {
     textAlign: 'right',
     fontSize: '16px',
     marginTop: '10px',
+  },
+  loadingContainer: {
+    textAlign: 'center',
+    padding: '3rem',
+  },
+  loadingText: {
+    fontSize: '16px',
+    color: '#6b7280',
+  },
+  errorContainer: {
+    backgroundColor: '#fee2e2',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    padding: '1.5rem',
+    marginBottom: '1.5rem',
+    textAlign: 'center',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: '14px',
+    marginBottom: '1rem',
+  },
+  retryBtn: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
   },
 };

@@ -2,30 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../components/Layout';
 import { getText } from '../utils/translations';
+import { productAPI } from '../services/api';
+import { useProducts } from '../context/ProductContext';
 
 export default function ProductManagement() {
   const { language } = useLanguage();
+  const { products: contextProducts, loading, error, refreshProducts } = useProducts();
   const [products, setProducts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = () => {
-    const mockProducts = [
-      { id: 1, name: 'Rice', nameTamil: 'அரிசி', price: 50, category: 'Groceries', enabled: true, image: null },
-      { id: 2, name: 'Wheat', nameTamil: 'கோதுமை', price: 45, category: 'Groceries', enabled: true, image: null },
-      { id: 3, name: 'Sugar', nameTamil: 'சர்க்கரை', price: 40, category: 'Groceries', enabled: true, image: null },
-      { id: 4, name: 'Tea', nameTamil: 'தேநீர்', price: 250, category: 'Beverages', enabled: true, image: null },
-      { id: 5, name: 'Coffee', nameTamil: 'காபி', price: 350, category: 'Beverages', enabled: true, image: null },
-      { id: 6, name: 'Salt', nameTamil: 'உப்பு', price: 20, category: 'Groceries', enabled: false, image: null },
-    ];
-    setProducts(mockProducts);
-  };
+    if (contextProducts.length > 0) {
+      setProducts(contextProducts);
+    }
+  }, [contextProducts]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -39,7 +33,7 @@ export default function ProductManagement() {
       reader.onloadend = () => {
         setImagePreview(reader.result);
         if (editingProduct) {
-          setEditingProduct({ ...editingProduct, image: reader.result });
+          setEditingProduct({ ...editingProduct, imageUrl: reader.result });
         }
       };
       reader.readAsDataURL(file);
@@ -48,11 +42,11 @@ export default function ProductManagement() {
 
   const handleEdit = (product) => {
     setEditingProduct({ ...product });
-    setImagePreview(product.image);
+    setImagePreview(product.imageUrl);
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingProduct.name || !editingProduct.nameTamil || !editingProduct.price) {
       alert(`${getText('Please fill all fields', language)}`);
       return;
@@ -64,13 +58,28 @@ export default function ProductManagement() {
     }
 
     if (window.confirm(`${getText('Update product', language)}?`)) {
-      setProducts(products.map(p =>
-        p.id === editingProduct.id ? editingProduct : p
-      ));
-      setIsEditing(false);
-      setEditingProduct(null);
-      setImagePreview(null);
-      alert(`${getText('Success', language)}!`);
+      try {
+        setIsSaving(true);
+        await productAPI.updateProduct(editingProduct._id, {
+          name: editingProduct.name,
+          nameTamil: editingProduct.nameTamil,
+          price: editingProduct.price,
+          category: editingProduct.category,
+          enabled: editingProduct.enabled,
+          imageUrl: editingProduct.imageUrl,
+        });
+        
+        await refreshProducts();
+        setIsEditing(false);
+        setEditingProduct(null);
+        setImagePreview(null);
+        alert(`${getText('Success', language)}!`);
+      } catch (error) {
+        console.error('Failed to update product:', error);
+        alert(error.message || `${getText('Failed to update product', language)}`);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -80,42 +89,51 @@ export default function ProductManagement() {
     setImagePreview(null);
   };
 
-  const handleDelete = (product) => {
+  const handleDelete = async (product) => {
     if (window.confirm(`${getText('Delete', language)} "${product.name}"?`)) {
       if (window.confirm(`${getText('Are you absolutely sure', language)}? ${getText('This cannot be undone', language)}.`)) {
-        setProducts(products.filter(p => p.id !== product.id));
-        alert(`${getText('Product deleted successfully', language)}`);
+        try {
+          await productAPI.deleteProduct(product._id);
+          await refreshProducts();
+          alert(`${getText('Product deleted successfully', language)}`);
+        } catch (error) {
+          console.error('Failed to delete product:', error);
+          alert(error.message || `${getText('Failed to delete product', language)}`);
+        }
       }
     }
   };
 
-  const toggleEnabled = (product) => {
+  const toggleEnabled = async (product) => {
     const action = product.enabled ? 'disable' : 'enable';
     const actionTamil = product.enabled ? 'முடக்கு' : 'செயல்படுத்து';
     
     if (window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} "${product.name}"? / ${actionTamil} "${product.nameTamil}"?`)) {
-      setProducts(products.map(p =>
-        p.id === product.id ? { ...p, enabled: !p.enabled } : p
-      ));
+      try {
+        await productAPI.updateProduct(product._id, { enabled: !product.enabled });
+        await refreshProducts();
+      } catch (error) {
+        console.error('Failed to toggle product:', error);
+        alert(error.message || `${getText('Failed to update product', language)}`);
+      }
     }
   };
 
   const handleAddProduct = () => {
     const newProduct = {
-      id: Date.now(),
       name: '',
       nameTamil: '',
       price: 0,
       category: 'Groceries',
       enabled: true,
-      image: null,
+      imageUrl: '',
     };
     setEditingProduct(newProduct);
     setImagePreview(null);
     setShowAddForm(true);
   };
 
-  const handleSaveNewProduct = () => {
+  const handleSaveNewProduct = async () => {
     if (!editingProduct.name || !editingProduct.nameTamil || !editingProduct.price) {
       alert(`${getText('Please fill all fields', language)}`);
       return;
@@ -126,11 +144,20 @@ export default function ProductManagement() {
       return;
     }
 
-    setProducts([...products, editingProduct]);
-    setShowAddForm(false);
-    setEditingProduct(null);
-    setImagePreview(null);
-    alert(`${getText('Product added successfully', language)}`);
+    try {
+      setIsSaving(true);
+      await productAPI.createProduct(editingProduct);
+      await refreshProducts();
+      setShowAddForm(false);
+      setEditingProduct(null);
+      setImagePreview(null);
+      alert(`${getText('Product added successfully', language)}`);
+    } catch (error) {
+      console.error('Failed to add product:', error);
+      alert(error.message || `${getText('Failed to add product', language)}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancelAdd = () => {
@@ -244,13 +271,16 @@ export default function ProductManagement() {
                 <button
                   onClick={showAddForm ? handleSaveNewProduct : handleSave}
                   style={styles.saveBtn}
+                  disabled={isSaving}
                 >
                   <Save size={18} />
-                  {getText('Save', language)}
+                  {isSaving ? getText('Saving...', language) : getText('Save', language)}
                 </button>
                 <button
                   onClick={showAddForm ? handleCancelAdd : handleCancel}
                   style={styles.cancelBtn}
+                  disabled={isSaving}
+                >
                 >
                   <X size={18} />
                   {getText('Cancel', language)}
@@ -261,11 +291,29 @@ export default function ProductManagement() {
         </div>
       )}
 
+      {loading && (
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingText}>{getText('Loading products...', language)}</div>
+        </div>
+      )}
+
+      {error && (
+        <div style={styles.errorContainer}>
+          <p style={styles.errorText}>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && products.length === 0 && (
+        <div style={styles.emptyState}>
+          <p>{getText('No products found', language)}</p>
+        </div>
+      )}
+
       <div style={styles.productsGrid}>
         {products.map(product => (
-          <div key={product.id} style={styles.productCard}>
-            {product.image ? (
-              <img src={product.image} alt={product.name} style={styles.cardImage} />
+          <div key={product._id} style={styles.productCard}>
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.name} style={styles.cardImage} />
             ) : (
               <div style={styles.cardImagePlaceholder}>
                 <ImageIcon size={40} color="#d1d5db" />
@@ -609,6 +657,25 @@ const styles = {
     gap: '0.5rem',
     fontSize: '14px',
     fontWeight: '600',
+  },
+  loadingContainer: {
+    textAlign: 'center',
+    padding: '3rem',
+  },
+  loadingText: {
+    fontSize: '16px',
+    color: '#6b7280',
+  },
+  errorContainer: {
+    backgroundColor: '#fee2e2',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    padding: '1rem',
+    marginBottom: '1.5rem',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: '14px',
   },
   emptyState: {
     textAlign: 'center',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Key } from 'lucide-react';
 import { useLanguage } from '../components/Layout';
 import { getText } from '../utils/translations';
+import { userAPI } from '../services/api';
 
 export default function StaffManagement() {
   const { language } = useLanguage();
@@ -9,29 +10,34 @@ export default function StaffManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadStaff();
   }, []);
 
-  const loadStaff = () => {
-    // Mock staff data
-    const mockStaff = [
-      { id: 2, username: 'staff1', name: 'Ravi Kumar', role: 'STAFF', enabled: true, createdAt: '2024-01-15' },
-      { id: 3, username: 'staff2', name: 'Priya Lakshmi', role: 'STAFF', enabled: true, createdAt: '2024-02-20' },
-      { id: 4, username: 'staff3', name: 'Muthu Raja', role: 'STAFF', enabled: false, createdAt: '2024-03-10' },
-    ];
-    setStaff(mockStaff);
+  const loadStaff = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await userAPI.getUsers();
+      setStaff(response.users || []);
+    } catch (err) {
+      console.error('Failed to load staff:', err);
+      setError(err.message || 'Failed to load staff');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddNew = () => {
     setEditingStaff({
-      id: Date.now(),
       username: '',
       name: '',
       password: '',
       role: 'STAFF',
-      enabled: true,
     });
     setShowAddForm(true);
   };
@@ -41,7 +47,7 @@ export default function StaffManagement() {
     setIsEditing(true);
   };
 
-  const handleSaveNew = () => {
+  const handleSaveNew = async () => {
     if (!editingStaff.username || !editingStaff.name || !editingStaff.password) {
       alert(getText('Please fill all required fields', language));
       return;
@@ -53,44 +59,74 @@ export default function StaffManagement() {
     }
 
     if (window.confirm(`Add staff member "${editingStaff.name}"? / பணியாளரை சேர்க்கலாமா?`)) {
-      setStaff([...staff, { ...editingStaff, createdAt: new Date().toISOString() }]);
-      setShowAddForm(false);
-      setEditingStaff(null);
-      alert('Staff added successfully / பணியாளர் வெற்றிகரமாக சேர்க்கப்பட்டார்');
+      try {
+        setIsSaving(true);
+        await userAPI.createUser(editingStaff);
+        await loadStaff();
+        setShowAddForm(false);
+        setEditingStaff(null);
+        alert('Staff added successfully / பணியாளர் வெற்றிகரமாக சேர்க்கப்பட்டார்');
+      } catch (error) {
+        console.error('Failed to add staff:', error);
+        alert(error.message || 'Failed to add staff');
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingStaff.name) {
       alert('Please enter staff name / பணியாளர் பெயரை உள்ளிடவும்');
       return;
     }
 
     if (window.confirm(`Update staff details? / விவரங்களை புதுப்பிக்கலாமா?`)) {
-      setStaff(staff.map(s =>
-        s.id === editingStaff.id ? editingStaff : s
-      ));
-      setIsEditing(false);
-      setEditingStaff(null);
-      alert('Staff updated successfully / பணியாளர் புதுப்பிக்கப்பட்டார்');
+      try {
+        setIsSaving(true);
+        const updateData = { name: editingStaff.name, role: editingStaff.role };
+        if (editingStaff.password) {
+          updateData.password = editingStaff.password;
+        }
+        await userAPI.updateUser(editingStaff._id, updateData);
+        await loadStaff();
+        setIsEditing(false);
+        setEditingStaff(null);
+        alert('Staff updated successfully / பணியாளர் புதுப்பிக்கப்பட்டார்');
+      } catch (error) {
+        console.error('Failed to update staff:', error);
+        alert(error.message || 'Failed to update staff');
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
-  const handleToggleEnabled = (staffId) => {
-    const staffMember = staff.find(s => s.id === staffId);
+  const handleToggleEnabled = async (staffId) => {
+    const staffMember = staff.find(s => s._id === staffId);
     const action = staffMember.enabled ? 'disable' : 'enable';
     if (window.confirm(`${action} this staff member? / இந்த பணியாளரை ${staffMember.enabled ? 'நிறுத்தலாமா' : 'இயக்கலாமா'}?`)) {
-      setStaff(staff.map(s =>
-        s.id === staffId ? { ...s, enabled: !s.enabled } : s
-      ));
+      try {
+        await userAPI.updateUser(staffId, { enabled: !staffMember.enabled });
+        await loadStaff();
+      } catch (error) {
+        console.error('Failed to toggle staff:', error);
+        alert(error.message || 'Failed to update staff');
+      }
     }
   };
 
-  const handleDelete = (staffId) => {
+  const handleDelete = async (staffId) => {
     if (window.confirm('Are you sure you want to delete this staff member? This cannot be undone. / இந்த பணியாளரை நீக்கலாமா? இதை மாற்ற முடியாது.')) {
       if (window.confirm('Final confirmation: Delete staff permanently? / இறுதி உறுதிப்படுத்தல்: நிரந்தரமாக நீக்கலாமா?')) {
-        setStaff(staff.filter(s => s.id !== staffId));
-        alert('Staff deleted / பணியாளர் நீக்கப்பட்டார்');
+        try {
+          await userAPI.deleteUser(staffId);
+          await loadStaff();
+          alert('Staff deleted / பணியாளர் நீக்கப்பட்டார்');
+        } catch (error) {
+          console.error('Failed to delete staff:', error);
+          alert(error.message || 'Failed to delete staff');
+        }
       }
     }
   };
@@ -166,9 +202,10 @@ export default function StaffManagement() {
             <button
               onClick={showAddForm ? handleSaveNew : handleSaveEdit}
               style={styles.saveBtn}
+              disabled={isSaving}
             >
               <Save size={16} />
-              {getText('Save', language)}
+              {isSaving ? getText('Saving...', language) : getText('Save', language)}
             </button>
             <button
               onClick={() => {
@@ -177,6 +214,7 @@ export default function StaffManagement() {
                 setEditingStaff(null);
               }}
               style={styles.cancelBtn}
+              disabled={isSaving}
             >
               <X size={16} />
               {getText('Cancel', language)}
@@ -185,7 +223,22 @@ export default function StaffManagement() {
         </div>
       )}
 
-      {/* Staff Table */}
+      {loading && (
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingText}>{getText('Loading staff...', language)}</div>
+        </div>
+      )}
+
+      {error && (
+        <div style={styles.errorContainer}>
+          <p style={styles.errorText}>{error}</p>
+          <button onClick={loadStaff} style={styles.retryBtn}>
+            {getText('Retry', language)}
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && (
       <div style={styles.tableCard}>
         <table style={styles.table}>
           <thead>
@@ -199,7 +252,7 @@ export default function StaffManagement() {
           </thead>
           <tbody>
             {staff.map(s => (
-              <tr key={s.id} style={styles.tr}>
+              <tr key={s._id} style={styles.tr}>
                 <td style={styles.td}>{s.name}</td>
                 <td style={styles.td}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -208,11 +261,11 @@ export default function StaffManagement() {
                   </div>
                 </td>
                 <td style={styles.td}>
-                  <span style={styles.roleBadge}>{getText('Staff', language)}</span>
+                  <span style={styles.roleBadge}>{s.role === 'ADMIN' ? 'Admin' : getText('Staff', language)}</span>
                 </td>
                 <td style={styles.td}>
                   <button
-                    onClick={() => handleToggleEnabled(s.id)}
+                    onClick={() => handleToggleEnabled(s._id)}
                     style={{
                       ...styles.statusBtn,
                       backgroundColor: s.enabled ? '#d1fae5' : '#fee2e2',
@@ -227,14 +280,14 @@ export default function StaffManagement() {
                     <button
                       onClick={() => handleEdit(s)}
                       style={styles.editBtn}
-                      disabled={showAddForm || isEditing}
+                      disabled={showAddForm || isEditing || s.role === 'ADMIN'}
                     >
                       <Edit size={16} />
                     </button>
                     <button
-                      onClick={() => handleDelete(s.id)}
+                      onClick={() => handleDelete(s._id)}
                       style={styles.deleteBtn}
-                      disabled={showAddForm || isEditing}
+                      disabled={showAddForm || isEditing || s.role === 'ADMIN'}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -245,7 +298,7 @@ export default function StaffManagement() {
           </tbody>
         </table>
 
-        {staff.length === 0 && (
+        {!loading && !error && staff.length === 0 && (
           <div style={styles.emptyState}>
             <p>No staff members yet / இன்னும் பணியாளர்கள் இல்லை</p>
             <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '0.5rem' }}>
@@ -254,6 +307,7 @@ export default function StaffManagement() {
           </div>
         )}
       </div>
+      )}
 
       {/* Info Box */}
       <div style={styles.infoBox}>
@@ -470,5 +524,35 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '0.5rem',
+  },
+  loadingContainer: {
+    textAlign: 'center',
+    padding: '3rem',
+  },
+  loadingText: {
+    fontSize: '16px',
+    color: '#6b7280',
+  },
+  errorContainer: {
+    backgroundColor: '#fee2e2',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    padding: '1.5rem',
+    marginBottom: '1.5rem',
+    textAlign: 'center',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: '14px',
+    marginBottom: '1rem',
+  },
+  retryBtn: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
   },
 };

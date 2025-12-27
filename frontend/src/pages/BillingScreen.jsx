@@ -1,35 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../components/Layout';
 import { getText } from '../utils/translations';
-import { Plus, Minus, Trash2, ShoppingCart, Image as ImageIcon } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 export default function BillingScreen() {
   const { user } = useAuth();
+  const { products, categories: productCategories, loading: productsLoading, error: productsError } = useProducts();
   const { language } = useLanguage();
   const navigate = useNavigate();
   
-  const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
 
-  useEffect(() => {
-    // Load products - mock data
-    const mockProducts = [
-      { id: 1, name: 'Rice', nameTamil: 'அரிசி', price: 50, category: 'Groceries', enabled: true, image: '/rice.jpg' },
-      { id: 2, name: 'Wheat', nameTamil: 'கோதுமை', price: 45, category: 'Groceries', enabled: true, image: '/wheat.webp' },
-      { id: 3, name: 'Sugar', nameTamil: 'சர்க்கரை', price: 40, category: 'Groceries', enabled: true, image: '/sugar.jpg' },
-      { id: 4, name: 'Tea', nameTamil: 'தேநீர்', price: 250, category: 'Beverages', enabled: true, image: '/tea.jpg' },
-      { id: 5, name: 'Coffee', nameTamil: 'காபி', price: 350, category: 'Beverages', enabled: true, image: '/coffee.jpg' },
-      { id: 6, name: 'Salt', nameTamil: 'உப்பு', price: 20, category: 'Groceries', enabled: true, image: '/salt.jpg' },
-    ];
-    setProducts(mockProducts.filter(p => p.enabled));
-  }, []);
+  // Categories for filtering
+  const categories = ['ALL', ...productCategories];
 
-  const categories = ['ALL', ...new Set(products.map(p => p.category))];
-
+  // Filter products based on search and category
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           p.nameTamil.includes(searchTerm);
@@ -38,33 +28,40 @@ export default function BillingScreen() {
   });
 
   const addToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
+    const existingItem = cart.find(item => item.productId === product._id);
     if (existingItem) {
       setCart(cart.map(item =>
-        item.id === product.id
+        item.productId === product._id
           ? { ...item, quantity: item.quantity + 1 }
           : item
       ));
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      setCart([...cart, { 
+        productId: product._id,
+        name: product.name,
+        nameTamil: product.nameTamil,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        quantity: 1 
+      }]);
     }
   };
 
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
-      // No confirmation - instant removal per UX requirements
       removeFromCart(productId);
     } else {
       setCart(cart.map(item =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
+        item.productId === productId ? { ...item, quantity: newQuantity } : item
       ));
     }
   };
 
   const removeFromCart = (productId) => {
-    setCart(cart.filter(item => item.id !== productId));
+    setCart(cart.filter(item => item.productId !== productId));
   };
 
+  // Frontend ONLY displays total - backend will recalculate on bill creation
   const calculateTotal = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
@@ -75,15 +72,56 @@ export default function BillingScreen() {
       return;
     }
     
-    // Save current bill to sessionStorage to prevent data loss
-    sessionStorage.setItem('currentBill', JSON.stringify({
-      items: cart,
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
-    }));
+    // Pass cart with all product details to payment screen
+    const cartWithDetails = cart.map(cartItem => {
+      const product = products.find(p => p._id === cartItem.productId);
+      return {
+        id: cartItem.productId,
+        name: product?.name || cartItem.name,
+        nameTamil: product?.nameTamil || cartItem.nameTamil,
+        price: product?.price || cartItem.price,
+        quantity: cartItem.quantity,
+      };
+    });
     
-    navigate('/payment', { state: { cart, total: calculateTotal() } });
+    navigate('/payment', { state: { cart: cartWithDetails } });
   };
+
+  // Show loading state
+  if (productsLoading) {
+    return (
+      <div style={styles.container}>
+        <div style={{ ...styles.loadingContainer, textAlign: 'center', padding: '3rem' }}>
+          <div style={{ fontSize: '18px', color: '#64748b' }}>
+            {getText('Loading products', language)}...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state - BLOCK BILLING if products can't be loaded
+  if (productsError) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.errorContainer}>
+          <AlertCircle size={64} color="#ef4444" style={{ marginBottom: '1rem' }} />
+          <h2 style={{ color: '#ef4444', marginBottom: '1rem' }}>Cannot Load Products</h2>
+          <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>{productsError}</p>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>
+            {getText('Please check server connection', language)} / சர்வர் இணைப்பை சரிபார்க்கவும்
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn btn-primary"
+            style={{ marginTop: '1.5rem' }}
+          >
+            {getText('Retry', language)} / மீண்டும் முயற்சிக்கவும்
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -132,13 +170,13 @@ export default function BillingScreen() {
           <div style={styles.productGrid} className="pos-product-grid">
             {filteredProducts.map(product => (
               <div 
-                key={product.id} 
+                key={product._id} 
                 style={styles.productCard} 
                 className="pos-product-card card-hover"
                 onClick={() => addToCart(product)}
               >
-                {product.image ? (
-                  <img src={product.image} alt={product.name} style={styles.productImage} />
+                {product.imageUrl ? (
+                  <img src={product.imageUrl} alt={product.name} style={styles.productImage} />
                 ) : (
                   <div style={styles.productImagePlaceholder}>
                     <ImageIcon size={32} color="#9ca3af" />
@@ -177,7 +215,7 @@ export default function BillingScreen() {
               </div>
             ) : (
               cart.map(item => (
-                <div key={item.id} style={styles.cartItem}>
+                <div key={item.productId} style={styles.cartItem}>
                   <div style={styles.cartItemInfo}>
                     {/* Cart items also show both languages always */}
                     <div style={styles.cartItemName}>{item.name} / {item.nameTamil}</div>
@@ -188,7 +226,7 @@ export default function BillingScreen() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateQuantity(item.id, item.quantity - 1);
+                        updateQuantity(item.productId, item.quantity - 1);
                       }}
                       className="btn-icon"
                       style={styles.qtyBtn}
@@ -200,7 +238,7 @@ export default function BillingScreen() {
                       value={item.quantity}
                       onChange={(e) => {
                         e.stopPropagation();
-                        updateQuantity(item.id, parseInt(e.target.value) || 0);
+                        updateQuantity(item.productId, parseInt(e.target.value) || 0);
                       }}
                       style={styles.qtyInput}
                       min="1"
@@ -209,7 +247,7 @@ export default function BillingScreen() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateQuantity(item.id, item.quantity + 1);
+                        updateQuantity(item.productId, item.quantity + 1);
                       }}
                       className="btn-icon"
                       style={styles.qtyBtn}
@@ -220,7 +258,7 @@ export default function BillingScreen() {
                       onClick={(e) => {
                         e.stopPropagation();
                         // No confirmation - instant removal per UX requirements
-                        removeFromCart(item.id);
+                        removeFromCart(item.productId);
                       }}
                       className="btn-icon btn-danger"
                       style={styles.deleteBtn}
@@ -470,5 +508,21 @@ const styles = {
     color: 'var(--primary-color, #2563eb)',
     fontSize: '24px',
     fontWeight: '700',
+  },
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '400px',
+    textAlign: 'center',
+  },
+  errorContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '400px',
+    textAlign: 'center',
+    padding: '2rem',
   },
 };
