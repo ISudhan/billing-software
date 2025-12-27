@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
-import { getBilingual } from '../utils/translations';
+import { useLanguage } from '../components/Layout';
+import { getText } from '../utils/translations';
 
 export default function ProductManagement() {
+  const { language } = useLanguage();
   const [products, setProducts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -52,7 +54,7 @@ export default function ProductManagement() {
 
   const handleSave = () => {
     if (!editingProduct.name || !editingProduct.nameTamil || !editingProduct.price) {
-      alert(`${getBilingual('Please fill all fields')}`);
+      alert(`${getText('Please fill all fields', language)}`);
       return;
     }
 
@@ -61,14 +63,14 @@ export default function ProductManagement() {
       return;
     }
 
-    if (window.confirm(`${getBilingual('Update product')}?`)) {
+    if (window.confirm(`${getText('Update product', language)}?`)) {
       setProducts(products.map(p =>
         p.id === editingProduct.id ? editingProduct : p
       ));
       setIsEditing(false);
       setEditingProduct(null);
       setImagePreview(null);
-      alert(`${getBilingual('Success')}!`);
+      alert(`${getText('Success', language)}!`);
     }
   };
 
@@ -79,10 +81,10 @@ export default function ProductManagement() {
   };
 
   const handleDelete = (product) => {
-    if (window.confirm(`${getBilingual('Delete')} "${product.name}"?`)) {
-      if (window.confirm(`${getBilingual('Are you absolutely sure')}? ${getBilingual('This cannot be undone')}.`)) {
+    if (window.confirm(`${getText('Delete', language)} "${product.name}"?`)) {
+      if (window.confirm(`${getText('Are you absolutely sure', language)}? ${getText('This cannot be undone', language)}.`)) {
         setProducts(products.filter(p => p.id !== product.id));
-        alert(`${getBilingual('Product deleted successfully')}`);
+        alert(`${getText('Product deleted successfully', language)}`);
       }
     }
   };
@@ -115,7 +117,7 @@ export default function ProductManagement() {
 
   const handleSaveNewProduct = () => {
     if (!editingProduct.name || !editingProduct.nameTamil || !editingProduct.price) {
-      alert(`${getBilingual('Please fill all fields')}`);
+      alert(`${getText('Please fill all fields', language)}`);
       return;
     }
 
@@ -128,7 +130,7 @@ export default function ProductManagement() {
     setShowAddForm(false);
     setEditingProduct(null);
     setImagePreview(null);
-    alert(`${getBilingual('Product added successfully')}`);
+    alert(`${getText('Product added successfully', language)}`);
   };
 
   const handleCancelAdd = () => {
@@ -140,17 +142,17 @@ export default function ProductManagement() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>{getBilingual('Product Management')}</h1>
+        <h1 style={styles.title}>{getText('Product Management', language)}</h1>
         <button onClick={handleAddProduct} style={styles.addBtn}>
           <Plus size={20} />
-          {getBilingual('Add Product')}
+          {getText('Add Product', language)}
         </button>
       </div>
 
       {(showAddForm || isEditing) && editingProduct && (
         <div style={styles.editForm}>
           <h3 style={styles.formTitle}>
-            {showAddForm ? getBilingual('Add Product') : getBilingual('Edit Product')}
+            {showAddForm ? getText('Add Product', language) : getText('Edit Product', language)}
           </h3>
           
           <div style={styles.formGrid}>
@@ -178,7 +180,7 @@ export default function ProductManagement() {
                       style={styles.fileInput}
                     />
                     <ImageIcon size={48} color="#9ca3af" />
-                    <div style={styles.uploadText}>{getBilingual('Upload Image')}</div>
+                    <div style={styles.uploadText}>{getText('Upload Image', language)}</div>
                     <div style={styles.uploadHint}>Max 2MB / அதிகபட்சம் 2MB</div>
                   </label>
                 )}
@@ -187,7 +189,7 @@ export default function ProductManagement() {
 
             <div style={styles.formFields}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>{getBilingual('Product Name')} *</label>
+                <label style={styles.label}>{getText('Product Name', language)} *</label>
                 <input
                   type="text"
                   value={editingProduct.name}
@@ -198,7 +200,7 @@ export default function ProductManagement() {
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>{getBilingual('Tamil Name')} *</label>
+                <label style={styles.label}>{getText('Tamil Name', language)} *</label>
                 <input
                   type="text"
                   value={editingProduct.nameTamil}
@@ -211,7 +213,7 @@ export default function ProductManagement() {
 
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>{getBilingual('Price')} (₹) *</label>
+                  <label style={styles.label}>{getText('Price', language)} (₹) *</label>
                   <input
                     type="number"
                     value={editingProduct.price}
@@ -223,7 +225,7 @@ export default function ProductManagement() {
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>{getBilingual('Category')}</label>
+                  <label style={styles.label}>{getText('Category', language)}</label>
                   <select
                     value={editingProduct.category}
                     onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
@@ -244,14 +246,14 @@ export default function ProductManagement() {
                   style={styles.saveBtn}
                 >
                   <Save size={18} />
-                  {getBilingual('Save')}
+                  {getText('Save', language)}
                 </button>
                 <button
                   onClick={showAddForm ? handleCancelAdd : handleCancel}
                   style={styles.cancelBtn}
                 >
                   <X size={18} />
-                  {getBilingual('Cancel')}
+                  {getText('Cancel', language)}
                 </button>
               </div>
             </div>
@@ -281,17 +283,17 @@ export default function ProductManagement() {
                   backgroundColor: product.enabled ? '#dcfce7' : '#fee2e2',
                   color: product.enabled ? '#15803d' : '#b91c1c',
                 }}>
-                  {product.enabled ? getBilingual('Active') : getBilingual('Disabled')}
+                  {product.enabled ? getText('Active', language) : getText('Disabled', language)}
                 </span>
               </div>
 
               <div style={styles.cardDetails}>
                 <div style={styles.priceRow}>
-                  <span style={styles.priceLabel}>{getBilingual('Price')}:</span>
+                  <span style={styles.priceLabel}>{getText('Price', language)}:</span>
                   <span style={styles.price}>₹{product.price}</span>
                 </div>
                 <div style={styles.categoryRow}>
-                  <span style={styles.categoryLabel}>{getBilingual('Category')}:</span>
+                  <span style={styles.categoryLabel}>{getText('Category', language)}:</span>
                   <span style={styles.category}>{product.category}</span>
                 </div>
               </div>
@@ -299,7 +301,7 @@ export default function ProductManagement() {
               <div style={styles.cardActions}>
                 <button onClick={() => handleEdit(product)} style={styles.editBtn}>
                   <Edit size={16} />
-                  {getBilingual('Edit')}
+                  {getText('Edit', language)}
                 </button>
                 <button
                   onClick={() => toggleEnabled(product)}
@@ -309,11 +311,11 @@ export default function ProductManagement() {
                     color: product.enabled ? '#92400e' : '#15803d',
                   }}
                 >
-                  {product.enabled ? getBilingual('Disable') : getBilingual('Enable')}
+                  {product.enabled ? getText('Disable', language) : getText('Enable', language)}
                 </button>
                 <button onClick={() => handleDelete(product)} style={styles.deleteBtn}>
                   <Trash2 size={16} />
-                  {getBilingual('Delete')}
+                  {getText('Delete', language)}
                 </button>
               </div>
             </div>
@@ -323,7 +325,7 @@ export default function ProductManagement() {
 
       {products.length === 0 && (
         <div style={styles.emptyState}>
-          <p>{getBilingual('No products found')}</p>
+          <p>{getText('No products found', language)}</p>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getBilingual } from '../utils/translations';
+import { getText, getBilingual } from '../utils/translations';
 import { LogIn } from 'lucide-react';
 
 export default function Login() {
@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [language, setLanguage] = useState('en');
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function Login() {
         <div style={styles.header}>
           <LogIn size={56} color="#2563eb" />
           <h1 style={styles.title}>Senthur Billing</h1>
-          <p style={styles.subtitle}>{getBilingual('Sign in to continue')}</p>
+          <p style={styles.subtitle}>{getText('Sign in to continue', language)}</p>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -46,13 +47,13 @@ export default function Login() {
           )}
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>{getBilingual('Username')}</label>
+            <label style={styles.label}>{getText('Username', language)}</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               style={styles.input}
-              placeholder={getBilingual('Enter username')}
+              placeholder={getText('Enter username', language)}
               required
               autoFocus
               disabled={loading}
@@ -60,13 +61,13 @@ export default function Login() {
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>{getBilingual('Password')}</label>
+            <label style={styles.label}>{getText('Password', language)}</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}
-              placeholder={getBilingual('Enter password')}
+              placeholder={getText('Enter password', language)}
               required
               disabled={loading}
             />
@@ -77,17 +78,17 @@ export default function Login() {
             style={styles.button}
             disabled={loading}
           >
-            {loading ? getBilingual('Loading') + '...' : getBilingual('Sign In')}
+            {loading ? getText('Loading', language) + '...' : getText('Sign In', language)}
           </button>
         </form>
 
         <div style={styles.demoInfo}>
           <p style={styles.demoTitle}>Demo Credentials:</p>
           <div style={styles.demoItem}>
-            <strong>{getBilingual('Admin')}:</strong> admin / admin123
+            <strong>{getText('Admin', language)}:</strong> admin / admin123
           </div>
           <div style={styles.demoItem}>
-            <strong>{getBilingual('Staff')}:</strong> staff1 / staff123
+            <strong>{getText('Staff', language)}:</strong> staff1 / staff123
           </div>
         </div>
       </div>

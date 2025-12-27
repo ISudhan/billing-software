@@ -1,24 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getBilingual } from '../utils/translations';
+import { useLanguage } from '../components/Layout';
+import { getText } from '../utils/translations';
 import { ShoppingCart, FileText, Package, BarChart3, Settings, TrendingUp, Users } from 'lucide-react';
 
 export default function Home() {
   const { user, isAdmin } = useAuth();
+  const { language } = useLanguage();
 
   const staffCards = [
     {
-      title: getBilingual('New Bill'),
-      description: getBilingual('Create a new bill'),
+      title: getText('New Bill', language),
+      description: getText('Create a new bill', language),
       icon: ShoppingCart,
       link: '/billing',
       color: '#2563eb',
       bgColor: '#dbeafe',
     },
     {
-      title: getBilingual('Bill History'),
-      description: getBilingual('View your bills'),
+      title: getText('Bill History', language),
+      description: getText('View your bills', language),
       icon: FileText,
       link: '/bill-history',
       color: '#059669',
@@ -28,48 +30,48 @@ export default function Home() {
 
   const adminCards = [
     {
-      title: getBilingual('Billing'),
-      description: getBilingual('Create new bills'),
+      title: getText('Billing', language),
+      description: getText('Create new bills', language),
       icon: ShoppingCart,
       link: '/billing',
       color: '#2563eb',
       bgColor: '#dbeafe',
     },
     {
-      title: getBilingual('Bill History'),
-      description: getBilingual('View all bills'),
+      title: getText('Bill History', language),
+      description: getText('View all bills', language),
       icon: FileText,
       link: '/bill-history',
       color: '#059669',
       bgColor: '#d1fae5',
     },
     {
-      title: getBilingual('Product Management'),
-      description: getBilingual('Manage products'),
+      title: getText('Product Management', language),
+      description: getText('Manage products', language),
       icon: Package,
       link: '/products',
       color: '#d97706',
       bgColor: '#fef3c7',
     },
     {
-      title: getBilingual('Reports'),
-      description: getBilingual('View analytics'),
+      title: getText('Reports', language),
+      description: getText('View analytics', language),
       icon: BarChart3,
       link: '/reports',
       color: '#9333ea',
       bgColor: '#e9d5ff',
     },
     {
-      title: getBilingual('Staff Management'),
-      description: getBilingual('Manage staff users'),
+      title: getText('Staff Management', language),
+      description: getText('Manage staff users', language),
       icon: Users,
       link: '/staff',
       color: '#0891b2',
       bgColor: '#cffafe',
     },
     {
-      title: getBilingual('Settings'),
-      description: getBilingual('Configure system'),
+      title: getText('Settings', language),
+      description: getText('Configure system', language),
       icon: Settings,
       link: '/settings',
       color: '#dc2626',
@@ -83,12 +85,12 @@ export default function Home() {
     <div style={styles.container}>
       <div style={styles.welcome}>
         <h1 style={styles.welcomeTitle}>
-          {getBilingual('Welcome')}, {user.name}!
+          {getText('Welcome', language)}, {user.name}!
         </h1>
         <p style={styles.welcomeSubtitle}>
           {isAdmin() 
-            ? getBilingual('Full system access') 
-            : getBilingual('Ready to serve customers')}
+            ? getText('Full system access', language) 
+            : getText('Ready to serve customers', language)}
         </p>
       </div>
 

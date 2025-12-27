@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { getBilingual } from '../utils/translations';
+import { useLanguage } from '../components/Layout';
+import { getText } from '../utils/translations';
 import { Save, AlertCircle } from 'lucide-react';
 
 export default function Settings() {
+  const { language } = useLanguage();
   const [settings, setSettings] = useState({
     shopName: 'Senthur Billing',
     shopAddress1: 'Address Line 1',
@@ -32,18 +34,18 @@ export default function Settings() {
   };
 
   const handleSave = () => {
-    if (window.confirm(`${getBilingual('Save Changes')}? / மாற்றங்களை சேமிக்கவா?`)) {
+    if (window.confirm(`${getText('Save Changes', language)}? / மாற்றங்களை சேமிக்கவா?`)) {
       // In production: save to API
       console.log('Saving settings:', settings);
       setHasChanges(false);
-      alert(`${getBilingual('Settings saved successfully')}!`);
+      alert(`${getText('Settings saved successfully', language)}!`);
     }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>{getBilingual('Settings')}</h1>
+        <h1 style={styles.title}>{getText('Settings', language)}</h1>
         <button
           onClick={handleSave}
           style={{
@@ -54,7 +56,7 @@ export default function Settings() {
           disabled={!hasChanges}
         >
           <Save size={20} />
-          {getBilingual('Save Changes')}
+          {getText('Save Changes', language)}
         </button>
       </div>
 

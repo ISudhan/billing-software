@@ -18,12 +18,12 @@ export default function BillingScreen() {
   useEffect(() => {
     // Load products - mock data
     const mockProducts = [
-      { id: 1, name: 'Rice', nameTamil: 'அரிசி', price: 50, category: 'Groceries', enabled: true, image: null },
-      { id: 2, name: 'Wheat', nameTamil: 'கோதுமை', price: 45, category: 'Groceries', enabled: true, image: null },
-      { id: 3, name: 'Sugar', nameTamil: 'சர்க்கரை', price: 40, category: 'Groceries', enabled: true, image: null },
-      { id: 4, name: 'Tea', nameTamil: 'தேநீர்', price: 250, category: 'Beverages', enabled: true, image: null },
-      { id: 5, name: 'Coffee', nameTamil: 'காபி', price: 350, category: 'Beverages', enabled: true, image: null },
-      { id: 6, name: 'Salt', nameTamil: 'உப்பு', price: 20, category: 'Groceries', enabled: true, image: null },
+      { id: 1, name: 'Rice', nameTamil: 'அரிசி', price: 50, category: 'Groceries', enabled: true, image: '/rice.jpg' },
+      { id: 2, name: 'Wheat', nameTamil: 'கோதுமை', price: 45, category: 'Groceries', enabled: true, image: '/wheat.webp' },
+      { id: 3, name: 'Sugar', nameTamil: 'சர்க்கரை', price: 40, category: 'Groceries', enabled: true, image: '/sugar.jpg' },
+      { id: 4, name: 'Tea', nameTamil: 'தேநீர்', price: 250, category: 'Beverages', enabled: true, image: '/tea.jpg' },
+      { id: 5, name: 'Coffee', nameTamil: 'காபி', price: 350, category: 'Beverages', enabled: true, image: '/coffee.jpg' },
+      { id: 6, name: 'Salt', nameTamil: 'உப்பு', price: 20, category: 'Groceries', enabled: true, image: '/salt.jpg' },
     ];
     setProducts(mockProducts.filter(p => p.enabled));
   }, []);

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getBilingual } from '../utils/translations';
+import { useLanguage } from '../components/Layout';
+import { getText } from '../utils/translations';
 import { Eye, Printer, Search } from 'lucide-react';
 
 export default function BillHistory() {
   const { user, isAdmin } = useAuth();
+  const { language } = useLanguage();
   const [bills, setBills] = useState([]);
   const [filteredBills, setFilteredBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,7 +101,7 @@ export default function BillHistory() {
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>
-        {isAdmin() ? getBilingual('All Bills') : getBilingual('My Bills')}
+        {isAdmin() ? getText('All Bills', language) : getText('My Bills', language)}
       </h1>
 
       <div style={styles.filters}>
@@ -107,7 +109,7 @@ export default function BillHistory() {
           <Search size={20} />
           <input
             type="text"
-            placeholder={getBilingual('Search bills') + '...'}
+            placeholder={getText('Search bills', language) + '...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={styles.searchInput}
@@ -119,14 +121,14 @@ export default function BillHistory() {
           onChange={(e) => setDateFilter(e.target.value)}
           style={styles.select}
         >
-          <option value="TODAY">{getBilingual('TODAY')}</option>
-          <option value="ALL">{getBilingual('ALL')}</option>
+          <option value="TODAY">{getText('TODAY', language)}</option>
+          <option value="ALL">{getText('ALL', language)}</option>
         </select>
       </div>
 
       <div style={styles.billsGrid}>
         {filteredBills.length === 0 ? (
-          <div style={styles.noBills}>{getBilingual('No bills found')}</div>
+          <div style={styles.noBills}>{getText('No bills found', language)}</div>
         ) : (
           filteredBills.map(bill => (
             <div key={bill.id} style={styles.billCard}>
@@ -137,35 +139,35 @@ export default function BillHistory() {
 
               <div style={styles.billInfo}>
                 <div style={styles.infoRow}>
-                  <span>{getBilingual('Date')}:</span>
+                  <span>{getText('Date', language)}:</span>
                   <span>{new Date(bill.createdAt).toLocaleString()}</span>
                 </div>
                 <div style={styles.infoRow}>
-                  <span>{getBilingual('Cashier')}:</span>
+                  <span>{getText('Cashier', language)}:</span>
                   <span>{bill.createdByName}</span>
                 </div>
                 <div style={styles.infoRow}>
-                  <span>{getBilingual('items')}:</span>
+                  <span>{getText('items', language)}:</span>
                   <span>{bill.items.length}</span>
                 </div>
                 <div style={styles.infoRow}>
-                  <span>{getBilingual('Payment')}:</span>
+                  <span>{getText('Payment', language)}:</span>
                   <span>{bill.paymentMode}</span>
                 </div>
               </div>
 
               <div style={styles.billTotal}>
-                {getBilingual('Total Amount')}: ₹{bill.total}
+                {getText('Total Amount', language)}: ₹{bill.total}
               </div>
 
               <div style={styles.billActions}>
                 <button onClick={() => handleViewBill(bill)} style={styles.viewBtn}>
                   <Eye size={16} />
-                  {getBilingual('View')}
+                  {getText('View', language)}
                 </button>
                 <button onClick={() => handlePrintBill(bill)} style={styles.printBtn}>
                   <Printer size={16} />
-                  {getBilingual('Print')}
+                  {getText('Print', language)}
                 </button>
               </div>
             </div>

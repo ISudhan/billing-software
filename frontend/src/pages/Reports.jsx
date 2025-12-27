@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { getBilingual } from '../utils/translations';
+import { useLanguage } from '../components/Layout';
+import { getText } from '../utils/translations';
 import { BarChart3, TrendingUp, DollarSign, ShoppingBag, Users } from 'lucide-react';
 
 export default function Reports() {
+  const { language } = useLanguage();
   const [dateRange, setDateRange] = useState('TODAY');
   const [reportData, setReportData] = useState(getMockReportData());
 
@@ -47,17 +49,17 @@ export default function Reports() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>{getBilingual('Reports')}</h1>
+        <h1 style={styles.title}>{getText('Reports', language)}</h1>
         <select
           value={dateRange}
           onChange={(e) => handleDateRangeChange(e.target.value)}
           style={styles.select}
         >
-          <option value="TODAY">{getBilingual('TODAY')}</option>
-          <option value="YESTERDAY">{getBilingual('Yesterday')}</option>
-          <option value="THIS_WEEK">{getBilingual('This Week')}</option>
-          <option value="THIS_MONTH">{getBilingual('This Month')}</option>
-          <option value="CUSTOM">{getBilingual('Custom Range')}</option>
+          <option value="TODAY">{getText('TODAY', language)}</option>
+          <option value="YESTERDAY">{getText('Yesterday', language)}</option>
+          <option value="THIS_WEEK">{getText('This Week', language)}</option>
+          <option value="THIS_MONTH">{getText('This Month', language)}</option>
+          <option value="CUSTOM">{getText('Custom Range', language)}</option>
         </select>
       </div>
 

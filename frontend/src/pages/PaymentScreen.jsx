@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getBilingual } from '../utils/translations';
+import { getText, getBilingual } from '../utils/translations';
 import { Printer, CheckCircle, CreditCard, Banknote, QrCode } from 'lucide-react';
 import QRCode from 'qrcode.react';
 
@@ -10,6 +10,7 @@ export default function PaymentScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const printRef = useRef();
+  const [language, setLanguage] = useState('en');
 
   const { cart, total } = location.state || { cart: [], total: 0 };
   
@@ -48,7 +49,7 @@ export default function PaymentScreen() {
       // Auto print
       setTimeout(() => handlePrint(), 500);
     } catch (error) {
-      alert(`${getBilingual('Failed to save')} / சேமிக்க தவறிவிட்டது. ${getBilingual('Try again')}.`);
+      alert(`${getText('Failed to save', language)} / சேமிக்க தவறிவிட்டது. ${getText('Try again', language)}.`);
     }
   };
 
@@ -61,7 +62,7 @@ export default function PaymentScreen() {
       setIsPrinting(false);
     } catch (error) {
       setIsPrinting(false);
-      setPrintError(`${getBilingual('Printing failed')} / அச்சிடல் தோல்வி. ${getBilingual('Try again')}.`);
+      setPrintError(`${getText('Printing failed', language)} / அச்சிடல் தோல்வி. ${getText('Try again', language)}.`);
     }
   };
 
@@ -70,19 +71,19 @@ export default function PaymentScreen() {
   };
 
   const paymentModes = [
-    { value: 'CASH', label: getBilingual('CASH'), icon: Banknote },
-    { value: 'CARD', label: getBilingual('CARD'), icon: CreditCard },
-    { value: 'UPI', label: getBilingual('UPI'), icon: QrCode },
+    { value: 'CASH', label: getText('CASH', language), icon: Banknote },
+    { value: 'CARD', label: getText('CARD', language), icon: CreditCard },
+    { value: 'UPI', label: getText('UPI', language), icon: QrCode },
   ];
 
   return (
     <div style={styles.container}>
       {!billSaved ? (
         <div style={styles.paymentSection}>
-          <h1 style={styles.title}>{getBilingual('Payment')}</h1>
+          <h1 style={styles.title}>{getText('Payment', language)}</h1>
 
           <div style={styles.card}>
-            <h2 style={styles.sectionTitle}>{getBilingual('Select Payment Mode')}</h2>
+            <h2 style={styles.sectionTitle}>{getText('Select Payment Mode', language)}</h2>
             <div style={styles.paymentModes}>
               {paymentModes.map(mode => {
                 const Icon = mode.icon;
@@ -121,21 +122,21 @@ export default function PaymentScreen() {
             </div>
 
             <button onClick={handlePaymentConfirm} style={styles.confirmBtn}>
-              {getBilingual('Confirm Payment')}
+              {getText('Confirm Payment', language)}
             </button>
           </div>
         </div>
       ) : (
         <div style={styles.successSection}>
           <CheckCircle size={64} color="#10b981" />
-          <h1 style={styles.successTitle}>{getBilingual('Payment Successful')}!</h1>
-          <p style={styles.billNumberText}>{getBilingual('Bill Number')}: {billNumber}</p>
+          <h1 style={styles.successTitle}>{getText('Payment Successful', language)}!</h1>
+          <p style={styles.billNumberText}>{getText('Bill Number', language)}: {billNumber}</p>
 
           {printError && (
             <div style={styles.errorBox}>
               <p>{printError}</p>
               <button onClick={handlePrint} style={styles.retryBtn}>
-                {getBilingual('Retry Print')}
+                {getText('Retry Print', language)}
               </button>
             </div>
           )}
@@ -143,10 +144,10 @@ export default function PaymentScreen() {
           <div style={styles.actions}>
             <button onClick={handlePrint} style={styles.printBtn} disabled={isPrinting}>
               <Printer size={20} />
-              {isPrinting ? getBilingual('Printing') + '...' : getBilingual('Print Bill')}
+              {isPrinting ? getText('Printing', language) + '...' : getText('Print Bill', language)}
             </button>
             <button onClick={handleNewBill} style={styles.newBillBtn}>
-              {getBilingual('New Bill')}
+              {getText('New Bill', language)}
             </button>
           </div>
         </div>

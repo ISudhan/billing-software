@@ -180,6 +180,6 @@ const styles = {
   navItemActive: {
     backgroundColor: 'rgba(59, 130, 246, 0.15)',
     color: '#ffffff',
-    borderLeftColor: '#3b82f6',
+    borderLeft: '3px solid #3b82f6',
   },
 };

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Key } from 'lucide-react';
-import { getBilingual } from '../utils/translations';
+import { useLanguage } from '../components/Layout';
+import { getText } from '../utils/translations';
 
 export default function StaffManagement() {
+  const { language } = useLanguage();
   const [staff, setStaff] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
@@ -41,12 +43,12 @@ export default function StaffManagement() {
 
   const handleSaveNew = () => {
     if (!editingStaff.username || !editingStaff.name || !editingStaff.password) {
-      alert('Please fill all required fields / அனைத்து தகவல்களையும் நிரப்பவும்');
+      alert(getText('Please fill all required fields', language));
       return;
     }
 
     if (editingStaff.password.length < 6) {
-      alert('Password must be at least 6 characters / கடவுச்சொல் குறைந்தது 6 எழுத்துக்கள் இருக்க வேண்டும்');
+      alert(getText('Password must be at least 6 characters', language));
       return;
     }
 
@@ -96,10 +98,10 @@ export default function StaffManagement() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>{getBilingual('Staff Management')}</h1>
+        <h1 style={styles.title}>{getText('Staff Management', language)}</h1>
         <button onClick={handleAddNew} style={styles.addBtn}>
           <Plus size={20} />
-          {getBilingual('Add Staff')}
+          {getText('Add Staff', language)}
         </button>
       </div>
 
@@ -107,12 +109,12 @@ export default function StaffManagement() {
       {(showAddForm || isEditing) && (
         <div style={styles.formCard}>
           <h2 style={styles.formTitle}>
-            {showAddForm ? getBilingual('Add Staff') : getBilingual('Edit') + ' ' + getBilingual('Staff')}
+            {showAddForm ? getText('Add Staff', language) : getText('Edit', language) + ' ' + getText('Staff', language)}
           </h2>
           
           <div style={styles.formGrid}>
             <div style={styles.formGroup}>
-              <label style={styles.label}>{getBilingual('Staff Name')} *</label>
+              <label style={styles.label}>{getText('Staff Name', language)} *</label>
               <input
                 type="text"
                 value={editingStaff.name}
@@ -123,7 +125,7 @@ export default function StaffManagement() {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>{getBilingual('Username')} *</label>
+              <label style={styles.label}>{getText('Username', language)} *</label>
               <input
                 type="text"
                 value={editingStaff.username}
@@ -136,7 +138,7 @@ export default function StaffManagement() {
 
             {showAddForm && (
               <div style={styles.formGroup}>
-                <label style={styles.label}>{getBilingual('Password')} * (min 6 characters)</label>
+                <label style={styles.label}>{getText('Password', language)} * (min 6 characters)</label>
                 <input
                   type="password"
                   value={editingStaff.password}
@@ -155,7 +157,7 @@ export default function StaffManagement() {
                   onChange={(e) => setEditingStaff({ ...editingStaff, enabled: e.target.checked })}
                   style={styles.checkbox}
                 />
-                {getBilingual('Enable')} (Allow login / உள்நுழைய அனுமதி)
+                {getText('Enable', language)} (Allow login / உள்நுழைய அனுமதி)
               </label>
             </div>
           </div>
@@ -166,7 +168,7 @@ export default function StaffManagement() {
               style={styles.saveBtn}
             >
               <Save size={16} />
-              {getBilingual('Save')}
+              {getText('Save', language)}
             </button>
             <button
               onClick={() => {
@@ -177,7 +179,7 @@ export default function StaffManagement() {
               style={styles.cancelBtn}
             >
               <X size={16} />
-              {getBilingual('Cancel')}
+              {getText('Cancel', language)}
             </button>
           </div>
         </div>
@@ -188,9 +190,9 @@ export default function StaffManagement() {
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={styles.th}>{getBilingual('Staff Name')}</th>
-              <th style={styles.th}>{getBilingual('Username')}</th>
-              <th style={styles.th}>{getBilingual('Role')}</th>
+              <th style={styles.th}>{getText('Staff Name', language)}</th>
+              <th style={styles.th}>{getText('Username', language)}</th>
+              <th style={styles.th}>{getText('Role', language)}</th>
               <th style={styles.th}>Status / நிலை</th>
               <th style={styles.th}>Actions / செயல்கள்</th>
             </tr>
@@ -206,7 +208,7 @@ export default function StaffManagement() {
                   </div>
                 </td>
                 <td style={styles.td}>
-                  <span style={styles.roleBadge}>{getBilingual('Staff')}</span>
+                  <span style={styles.roleBadge}>{getText('Staff', language)}</span>
                 </td>
                 <td style={styles.td}>
                   <button
@@ -217,7 +219,7 @@ export default function StaffManagement() {
                       color: s.enabled ? '#065f46' : '#991b1b',
                     }}
                   >
-                    {s.enabled ? getBilingual('Enabled') : getBilingual('Disabled')}
+                    {s.enabled ? getText('Enabled', language) : getText('Disabled', language)}
                   </button>
                 </td>
                 <td style={styles.td}>
