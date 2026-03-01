@@ -1,535 +1,538 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../components/Layout';
 import { getText } from '../utils/translations';
-import { Plus, Minus, Trash2, ShoppingCart, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import {
+  Plus, Minus, Trash2, ShoppingCart, AlertCircle,
+  Search, Camera, Sun, Zap, Battery, Lightbulb, Wrench, Package, ScanLine, X
+} from 'lucide-react';
+
+// Category display config
+const CATEGORY_CONFIG = {
+  'CCTV Cameras':       { icon: Camera,     color: '#8b5cf6', bg: '#f5f3ff', border: '#c4b5fd' },
+  'Solar Water Heaters':{ icon: Sun,        color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+  'Inverters':          { icon: Zap,        color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+  'Batteries':          { icon: Battery,    color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+  'Solar Street Lights':{ icon: Lightbulb,  color: '#f97316', bg: '#fff7ed', border: '#fed7aa' },
+  'Accessories':        { icon: Wrench,     color: '#06b6d4', bg: '#ecfeff', border: '#a5f3fc' },
+};
+const DEFAULT_CAT = { icon: Package, color: '#64748b', bg: '#f8fafc', border: '#e2e8f0' };
+const getCat = (c) => CATEGORY_CONFIG[c] || DEFAULT_CAT;
+
+function StockBadge({ product }) {
+  const stock = product.stockQuantity ?? 999;
+  const threshold = product.lowStockThreshold ?? 5;
+
+  if (stock === 0) return (
+    <span style={{ ...badge, background: '#fee2e2', color: '#dc2626' }}>
+      🔴 Out of Stock
+    </span>
+  );
+  if (stock <= threshold) return (
+    <span style={{ ...badge, background: '#fef3c7', color: '#92400e' }}>
+      🟡 Low ({stock} left)
+    </span>
+  );
+  return (
+    <span style={{ ...badge, background: '#dcfce7', color: '#15803d' }}>
+      🟢 {stock} in stock
+    </span>
+  );
+}
+
+const badge = {
+  fontSize: '10px', fontWeight: 700,
+  padding: '2px 6px', borderRadius: '6px',
+  display: 'inline-flex', alignItems: 'center', gap: '3px',
+};
 
 export default function BillingScreen() {
   const { user } = useAuth();
-  const { products, categories: productCategories, loading: productsLoading, error: productsError, refreshProducts } = useProducts();
+  const { products, categories: productCategories, loading, error, refreshProducts } = useProducts();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  
+  const barcodeRef = useRef('');
+  const barcodeTimerRef = useRef(null);
+
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [barcodeMode, setBarcodeMode] = useState(false);
+  const [scanFeedback, setScanFeedback] = useState('');
 
-  // Load products on mount if not already loaded
   useEffect(() => {
-    if (products.length === 0 && !productsLoading && !productsError) {
-      refreshProducts();
-    }
+    if (products.length === 0 && !loading && !error) refreshProducts();
   }, []);
 
-  // Categories for filtering
+  // ── Barcode scanner: capture keyboard input when barcodeMode is on ──────────
+  const handleBarcodeKeydown = useCallback((e) => {
+    if (!barcodeMode) return;
+    // Barcode scanners emit characters rapidly ending with Enter
+    if (e.key === 'Enter') {
+      const code = barcodeRef.current.trim();
+      barcodeRef.current = '';
+      if (code) {
+        const product = products.find(p => p.barcode === code);
+        if (product) {
+          addToCart(product);
+          setScanFeedback(`✅ Added: ${product.name}`);
+        } else {
+          setScanFeedback(`❌ No product found for barcode: ${code}`);
+        }
+        setTimeout(() => setScanFeedback(''), 2500);
+      }
+    } else if (e.key.length === 1) {
+      barcodeRef.current += e.key;
+      clearTimeout(barcodeTimerRef.current);
+      barcodeTimerRef.current = setTimeout(() => { barcodeRef.current = ''; }, 100);
+    }
+  }, [barcodeMode, products]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleBarcodeKeydown);
+    return () => window.removeEventListener('keydown', handleBarcodeKeydown);
+  }, [handleBarcodeKeydown]);
+
   const categories = ['ALL', ...productCategories];
 
-  // Filter products based on search and category
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          p.nameTamil.includes(searchTerm);
-    const matchesCategory = selectedCategory === 'ALL' || p.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const q = searchTerm.toLowerCase();
+    const matchSearch = !q ||
+      p.name.toLowerCase().includes(q) ||
+      p.nameTamil.includes(searchTerm) ||
+      p.category.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.includes(searchTerm));
+    const matchCat = selectedCategory === 'ALL' || p.category === selectedCategory;
+    return matchSearch && matchCat;
   });
 
+  const getCartItem = (productId) => cart.find(i => i.id === productId);
+  const getCartQty = (productId) => getCartItem(productId)?.quantity || 0;
+
   const addToCart = (product) => {
-    const existingItem = cart.find(item => item.productId === product._id);
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.productId === product._id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
-      setCart([...cart, { 
+    const stock = product.stockQuantity ?? 999;
+    const currentQty = getCartQty(product._id);
+
+    if (stock === 0) return; // out of stock — blocked
+    if (currentQty >= stock) {
+      setScanFeedback(`⚠️ Max stock reached for ${product.name} (${stock} available)`);
+      setTimeout(() => setScanFeedback(''), 2500);
+      return;
+    }
+
+    setCart(prev => {
+      const existing = prev.find(i => i.id === product._id);
+      if (existing) {
+        return prev.map(i => i.id === product._id ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...prev, {
+        id: product._id,
         productId: product._id,
         name: product.name,
         nameTamil: product.nameTamil,
         price: product.price,
-        imageUrl: product.imageUrl,
-        quantity: 1 
-      }]);
-    }
+        category: product.category,
+        stockQuantity: product.stockQuantity,
+        quantity: 1,
+      }];
+    });
   };
 
-  const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-    } else {
-      setCart(cart.map(item =>
-        item.productId === productId ? { ...item, quantity: newQuantity } : item
-      ));
-    }
+  const updateQuantity = (productId, qty) => {
+    const product = products.find(p => p._id === productId);
+    const maxStock = product?.stockQuantity ?? 999;
+    if (qty <= 0) removeFromCart(productId);
+    else if (qty > maxStock) return;
+    else setCart(cart.map(i => i.id === productId ? { ...i, quantity: qty } : i));
   };
 
-  const removeFromCart = (productId) => {
-    setCart(cart.filter(item => item.productId !== productId));
+  const removeFromCart = (productId) => setCart(cart.filter(i => i.id !== productId));
+  const clearCart = () => {
+    if (cart.length === 0) return;
+    if (window.confirm('Clear all items from cart?')) setCart([]);
   };
 
-  // Frontend ONLY displays total - backend will recalculate on bill creation
-  const calculateTotal = () => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  };
+  const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   const handleProceedToPayment = () => {
-    if (cart.length === 0) {
-      alert(getText('Please add items to cart', language));
-      return;
-    }
-    
-    // Pass cart with all product details to payment screen
-    const cartWithDetails = cart.map(cartItem => {
-      const product = products.find(p => p._id === cartItem.productId);
-      return {
-        id: cartItem.productId,
-        name: product?.name || cartItem.name,
-        nameTamil: product?.nameTamil || cartItem.nameTamil,
-        price: product?.price || cartItem.price,
-        quantity: cartItem.quantity,
-      };
+    if (cart.length === 0) return;
+    navigate('/payment', {
+      state: {
+        cart: cart.map(i => ({
+          id: i.id,
+          productId: i.id,
+          name: i.name,
+          nameTamil: i.nameTamil,
+          price: i.price,
+          quantity: i.quantity,
+          category: i.category,
+        }))
+      }
     });
-    
-    navigate('/payment', { state: { cart: cartWithDetails } });
   };
 
-  // Show loading state
-  if (productsLoading) {
-    return (
-      <div style={styles.container}>
-        <div style={{ ...styles.loadingContainer, textAlign: 'center', padding: '3rem' }}>
-          <div style={{ fontSize: '18px', color: '#64748b' }}>
-            {getText('Loading products', language)}...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state - BLOCK BILLING if products can't be loaded
-  if (productsError) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.errorContainer}>
-          <AlertCircle size={64} color="#ef4444" style={{ marginBottom: '1rem' }} />
-          <h2 style={{ color: '#ef4444', marginBottom: '1rem' }}>Cannot Load Products</h2>
-          <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>{productsError}</p>
-          <p style={{ color: '#64748b', fontSize: '14px' }}>
-            {getText('Please check server connection', language)} / சர்வர் இணைப்பை சரிபார்க்கவும்
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="btn btn-primary"
-            style={{ marginTop: '1.5rem' }}
-          >
-            {getText('Retry', language)} / மீண்டும் முயற்சிக்கவும்
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>
-          <ShoppingCart size={32} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />
-          {getText('New Bill', language)}
-        </h1>
-        <div style={styles.userInfo}>
-          <span className="badge badge-primary" style={{ fontSize: '14px', padding: '0.5rem 1rem' }}>
-            {getText('Cashier', language)}: {user.name}
-          </span>
-        </div>
-      </div>
+    <div style={styles.wrapper}>
+      {/* ── LHS: Product Grid ── */}
+      <div style={styles.productPane}>
 
-      <div className="billing-layout" style={styles.content}>
-        {/* Products Section - Left/Main Area */}
-        <div style={styles.productsSection} className="products-section">
-          <div style={styles.searchBar}>
-            <input
-              type="text"
-              placeholder={getText('Search products', language) + '...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={styles.searchInput}
-              className="input-field"
-            />
-          </div>
-
-          <div style={styles.categories}>
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory === cat ? 'btn btn-primary' : 'btn'}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '14px',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div style={styles.productGrid} className="pos-product-grid">
-            {filteredProducts.map(product => (
-              <div 
-                key={product._id} 
-                style={styles.productCard} 
-                className="pos-product-card card-hover"
-                onClick={() => addToCart(product)}
-              >
-                {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.name} style={styles.productImage} />
-                ) : (
-                  <div style={styles.productImagePlaceholder}>
-                    <ImageIcon size={32} color="#9ca3af" />
-                  </div>
-                )}
-                <div style={styles.productInfo}>
-                  {/* ALWAYS show both languages - NOT affected by language toggle */}
-                  <div className="pos-product-name-en">{product.name}</div>
-                  <div className="pos-product-name-ta tamil-text">{product.nameTamil}</div>
-                  <div style={styles.productPrice}>₹{product.price}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
-            <div style={styles.noResults}>
-              {getText('No products found', language)}
-            </div>
-          )}
-        </div>
-
-        {/* Cart Section - Right Panel (Always Visible) */}
-        <div style={styles.cartSection} className="pos-bill-panel bill-panel-sticky">
-          <div style={styles.cartHeader}>
-            <ShoppingCart size={22} />
-            <span style={{ flex: 1 }}>{getText('Cart', language)}</span>
-            <span className="badge badge-primary">{cart.length}</span>
-          </div>
-
-          <div style={styles.cartItems}>
-            {cart.length === 0 ? (
-              <div style={styles.emptyCart}>
-                <ShoppingCart size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
-                <div>{getText('Cart is empty', language)}</div>
-              </div>
-            ) : (
-              cart.map(item => (
-                <div key={item.productId} style={styles.cartItem}>
-                  <div style={styles.cartItemInfo}>
-                    {/* Cart items also show both languages always */}
-                    <div style={styles.cartItemName}>{item.name} / {item.nameTamil}</div>
-                    <div style={styles.cartItemPrice}>₹{item.price} × {item.quantity}</div>
-                  </div>
-                  
-                  <div style={styles.cartItemActions}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateQuantity(item.productId, item.quantity - 1);
-                      }}
-                      className="btn-icon"
-                      style={styles.qtyBtn}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        updateQuantity(item.productId, parseInt(e.target.value) || 0);
-                      }}
-                      style={styles.qtyInput}
-                      min="1"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateQuantity(item.productId, item.quantity + 1);
-                      }}
-                      className="btn-icon"
-                      style={styles.qtyBtn}
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // No confirmation - instant removal per UX requirements
-                        removeFromCart(item.productId);
-                      }}
-                      className="btn-icon btn-danger"
-                      style={styles.deleteBtn}
-                      title={getText('Delete', language)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-
-                  <div style={styles.cartItemTotal}>
-                    ₹{(item.price * item.quantity).toFixed(2)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div style={styles.cartFooter}>
-            <div style={styles.total}>
-              <span>{getText('Total Amount', language)}:</span>
-              <span style={styles.totalAmount}>₹{calculateTotal().toFixed(2)}</span>
-            </div>
+        {/* Header row */}
+        <div style={styles.productHeader}>
+          <h1 style={styles.pageTitle}>🛒 New Bill</h1>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {/* Barcode toggle */}
             <button
-              onClick={handleProceedToPayment}
-              className="btn btn-primary btn-lg"
+              onClick={() => setBarcodeMode(!barcodeMode)}
               style={{
-                width: '100%',
-                padding: '1.25rem',
-                fontSize: '16px',
-                opacity: cart.length === 0 ? 0.5 : 1,
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                ...styles.barcodeBtn,
+                background: barcodeMode ? 'linear-gradient(135deg,#0ea5e9,#2563eb)' : 'white',
+                color: barcodeMode ? 'white' : '#0ea5e9',
+                borderColor: '#0ea5e9',
               }}
-              disabled={cart.length === 0}
+              title={barcodeMode ? 'Barcode scan mode ON — scanning keyboard' : 'Click to enable barcode scanner'}
             >
-              {getText('Proceed to Payment', language)} →
+              <ScanLine size={18} />
+              {barcodeMode ? 'Scanning…' : 'Barcode'}
             </button>
           </div>
         </div>
+
+        {/* Scan feedback */}
+        {scanFeedback && (
+          <div style={{
+            ...styles.scanFeedback,
+            background: scanFeedback.startsWith('✅') ? '#dcfce7' : scanFeedback.startsWith('⚠️') ? '#fef3c7' : '#fee2e2',
+            color: scanFeedback.startsWith('✅') ? '#15803d' : scanFeedback.startsWith('⚠️') ? '#92400e' : '#dc2626',
+          }}>
+            {scanFeedback}
+          </div>
+        )}
+
+        {/* Search bar */}
+        <div style={styles.searchBox}>
+          <Search size={18} color="#94a3b8" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search products, Tamil name, barcode…"
+            style={styles.searchInput}
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} style={styles.clearSearch}>
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Category filter */}
+        <div style={styles.catScroll}>
+          {categories.map(cat => {
+            const active = selectedCategory === cat;
+            const cfg = cat === 'ALL' ? { color: '#0f172a', bg: '#f1f5f9', border: '#cbd5e1' } : getCat(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  ...styles.catBtn,
+                  background: active ? cfg.bg : 'white',
+                  color: active ? cfg.color : '#64748b',
+                  borderColor: active ? cfg.border : '#e2e8f0',
+                  fontWeight: active ? 700 : 500,
+                }}
+              >
+                {cat === 'ALL' ? '📦 All' : cat}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Product grid */}
+        {loading && <div style={styles.centerMsg}>Loading products…</div>}
+        {error   && <div style={{ ...styles.centerMsg, color: '#dc2626' }}><AlertCircle size={20} /> {error}</div>}
+
+        <div style={styles.productGrid}>
+          {filteredProducts.map(product => {
+            const cfg = getCat(product.category);
+            const Icon = cfg.icon;
+            const inCart = getCartQty(product._id);
+            const stockQty = product.stockQuantity ?? 999;
+            const outOfStock = stockQty === 0;
+
+            return (
+              <button
+                key={product._id}
+                onClick={() => !outOfStock && addToCart(product)}
+                disabled={outOfStock}
+                style={{
+                  ...styles.productCard,
+                  borderColor: inCart > 0 ? cfg.color : cfg.border,
+                  background: outOfStock ? '#f8fafc' : inCart > 0 ? cfg.bg : 'white',
+                  opacity: outOfStock ? 0.6 : 1,
+                  cursor: outOfStock ? 'not-allowed' : 'pointer',
+                  boxShadow: inCart > 0 ? `0 0 0 2px ${cfg.color}40` : undefined,
+                }}
+              >
+                {/* Category icon area */}
+                <div style={{ ...styles.catIconArea, background: cfg.bg }}>
+                  <Icon size={26} color={outOfStock ? '#94a3b8' : cfg.color} />
+                </div>
+
+                {/* In-cart badge */}
+                {inCart > 0 && (
+                  <div style={{ ...styles.cartBadge, background: cfg.color }}>
+                    {inCart}
+                  </div>
+                )}
+
+                <div style={styles.cardBody}>
+                  <div style={styles.productName}>{product.name}</div>
+                  <div style={styles.productTamil} className="tamil-text">{product.nameTamil}</div>
+                  <div style={styles.priceRow}>
+                    <span style={{ ...styles.price, color: outOfStock ? '#94a3b8' : cfg.color }}>
+                      ₹{product.price.toLocaleString('en-IN')}
+                    </span>
+                    {product.gstRate > 0 && (
+                      <span style={styles.gstTag}>GST {product.gstRate}%</span>
+                    )}
+                  </div>
+                  <StockBadge product={product} />
+                </div>
+              </button>
+            );
+          })}
+
+          {filteredProducts.length === 0 && !loading && (
+            <div style={{ ...styles.centerMsg, gridColumn: '1 / -1' }}>
+              No products found. Try a different search.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── RHS: Cart ── */}
+      <div style={styles.cartPane}>
+        <div style={styles.cartHeader}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ShoppingCart size={20} color="#0f172a" />
+            <span style={styles.cartTitle}>Cart</span>
+            {cartCount > 0 && (
+              <span style={styles.cartCountBadge}>{cartCount}</span>
+            )}
+          </div>
+          {cart.length > 0 && (
+            <button onClick={clearCart} style={styles.clearCartBtn}>Clear All</button>
+          )}
+        </div>
+
+        {cart.length === 0 ? (
+          <div style={styles.emptyCart}>
+            <ShoppingCart size={48} color="#cbd5e1" />
+            <p style={{ color: '#94a3b8', marginTop: '1rem', fontSize: '14px' }}>
+              Cart is empty.<br />Click a product to add.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div style={styles.cartItems}>
+              {cart.map(item => {
+                const product = products.find(p => p._id === item.id);
+                const maxStock = product?.stockQuantity ?? 999;
+                return (
+                  <div key={item.id} style={styles.cartItem}>
+                    <div style={styles.cartItemName}>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a' }}>{item.name}</div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8' }}>₹{item.price.toLocaleString('en-IN')} each</div>
+                    </div>
+                    <div style={styles.cartQtyRow}>
+                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={styles.qtyBtn}><Minus size={14} /></button>
+                      <span style={styles.qtyNum}>{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        disabled={item.quantity >= maxStock}
+                        style={{ ...styles.qtyBtn, opacity: item.quantity >= maxStock ? 0.4 : 1 }}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                    <div style={styles.cartItemTotal}>₹{(item.price * item.quantity).toLocaleString('en-IN')}</div>
+                    <button onClick={() => removeFromCart(item.id)} style={styles.removeBtn}><Trash2 size={14} /></button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={styles.cartFooter}>
+              <div style={styles.totalRow}>
+                <span style={{ color: '#64748b', fontWeight: 600 }}>Subtotal ({cartCount} items)</span>
+                <span style={styles.totalAmount}>₹{cartTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div style={styles.gstNote}>* Final total incl. GST calculated at checkout</div>
+              <button onClick={handleProceedToPayment} style={styles.checkoutBtn}>
+                Proceed to Payment →
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 const styles = {
-  container: {
-    padding: '0',
-    height: '100%',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem',
-    paddingBottom: '1rem',
-    borderBottom: '2px solid var(--border-color, #e5e7eb)',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: 'var(--text-primary, #1e293b)',
-    margin: 0,
-    display: 'flex',
-    alignItems: 'center',
-  },
-  userInfo: {
-    color: '#64748b',
-    fontSize: '14px',
-  },
-  content: {
+  wrapper: {
     display: 'grid',
-    gridTemplateColumns: '1fr',
-    gap: '1.5rem',
-    height: 'calc(100vh - 180px)',
+    gridTemplateColumns: '1fr 340px',
+    gap: '1.25rem',
+    alignItems: 'start',
+    minHeight: 'calc(100vh - 76px)',
   },
-  productsSection: {
-    backgroundColor: 'var(--bg-card, #ffffff)',
-    borderRadius: 'var(--radius-lg, 12px)',
-    padding: '1.5rem',
-    boxShadow: 'var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1))',
-    overflow: 'auto',
+
+  // Product pane
+  productPane: { display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 },
+  productHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  pageTitle: { fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0 },
+
+  barcodeBtn: {
+    display: 'flex', alignItems: 'center', gap: '0.4rem',
+    padding: '0.5rem 0.875rem', border: '1.5px solid', borderRadius: '10px',
+    cursor: 'pointer', fontSize: '13px', fontWeight: 700, transition: 'all 0.15s',
   },
-  searchBar: {
-    marginBottom: '1rem',
+
+  scanFeedback: {
+    padding: '0.625rem 1rem', borderRadius: '10px',
+    fontSize: '13px', fontWeight: 600, marginTop: '-0.25rem',
+    border: '1px solid transparent',
+  },
+
+  searchBox: {
+    display: 'flex', alignItems: 'center', gap: '0.625rem',
+    background: 'white', border: '1.5px solid #e2e8f0',
+    borderRadius: '12px', padding: '0.625rem 1rem',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
   },
   searchInput: {
-    width: '100%',
-    padding: '0.875rem 1rem',
-    border: '2px solid var(--border-color, #e5e7eb)',
-    borderRadius: 'var(--radius-md, 8px)',
-    fontSize: '15px',
-    transition: 'border-color 0.2s',
+    flex: 1, border: 'none', outline: 'none', fontSize: '14px',
+    color: '#0f172a', background: 'transparent',
   },
-  categories: {
-    display: 'flex',
-    gap: '0.75rem',
-    marginBottom: '1.5rem',
-    flexWrap: 'wrap',
+  clearSearch: { background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '2px' },
+
+  catScroll: {
+    display: 'flex', gap: '0.5rem', overflowX: 'auto',
+    paddingBottom: '4px', flexWrap: 'wrap',
   },
+  catBtn: {
+    flexShrink: 0, padding: '0.4rem 0.875rem',
+    border: '1.5px solid', borderRadius: '8px',
+    cursor: 'pointer', fontSize: '12px', transition: 'all 0.15s',
+    whiteSpace: 'nowrap',
+  },
+
   productGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-    gap: '1rem',
+    gap: '0.875rem',
   },
   productCard: {
-    padding: '1rem',
-    border: '2px solid var(--border-color, #e5e7eb)',
-    borderRadius: 'var(--radius-lg, 12px)',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    backgroundColor: '#ffffff',
-    minHeight: '200px',
+    position: 'relative', display: 'flex', flexDirection: 'column',
+    border: '1.5px solid', borderRadius: '14px', overflow: 'hidden',
+    textAlign: 'left', transition: 'all 0.15s',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
-  productImagePlaceholder: {
-    width: '100%',
-    height: '100px',
-    backgroundColor: '#f3f4f6',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: '0.75rem',
+  catIconArea: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    height: '72px',
   },
-  productImage: {
-    width: '100%',
-    height: '100px',
-    objectFit: 'cover',
-    borderRadius: '8px',
-    marginBottom: '0.75rem',
+  cartBadge: {
+    position: 'absolute', top: '8px', right: '8px',
+    width: '22px', height: '22px', borderRadius: '50%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '11px', fontWeight: 800, color: 'white',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
   },
-  productInfo: {
-    textAlign: 'center',
+  cardBody: { padding: '0.625rem 0.75rem 0.75rem', flex: 1 },
+  productName: { fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.3, marginBottom: '2px' },
+  productTamil: { fontSize: '10px', color: '#94a3b8', marginBottom: '4px' },
+  priceRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' },
+  price: { fontSize: '15px', fontWeight: 800 },
+  gstTag: {
+    fontSize: '9px', fontWeight: 700, padding: '1px 5px',
+    background: '#f1f5f9', color: '#64748b', borderRadius: '4px',
   },
-  productPrice: {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: 'var(--primary-color, #2563eb)',
-    marginTop: '0.5rem',
+
+  centerMsg: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    gap: '0.5rem', padding: '3rem', fontSize: '14px', color: '#64748b',
+    gridColumn: '1 / -1',
   },
-  noResults: {
-    textAlign: 'center',
-    padding: '3rem',
-    color: '#94a3b8',
-    fontSize: '16px',
-  },
-  cartSection: {
-    backgroundColor: 'var(--bg-card, #ffffff)',
-    borderRadius: 'var(--radius-lg, 12px)',
-    padding: '1.5rem',
-    boxShadow: 'var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1))',
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
+
+  // Cart
+  cartPane: {
+    background: 'white', borderRadius: '20px',
+    border: '1px solid #e2e8f0', boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    display: 'flex', flexDirection: 'column',
+    position: 'sticky', top: '90px',
+    maxHeight: 'calc(100vh - 120px)',
+    overflow: 'hidden',
   },
   cartHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    fontSize: '18px',
-    fontWeight: '700',
-    marginBottom: '1rem',
-    paddingBottom: '1rem',
-    borderBottom: '2px solid var(--border-color, #e5e7eb)',
-    color: 'var(--text-primary, #1e293b)',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '1rem 1.25rem',
+    borderBottom: '1px solid #f1f5f9',
   },
-  cartItems: {
-    flex: 1,
-    overflowY: 'auto',
-    marginBottom: '1rem',
+  cartTitle: { fontSize: '16px', fontWeight: 800, color: '#0f172a' },
+  cartCountBadge: {
+    background: 'linear-gradient(135deg,#10b981,#059669)',
+    color: 'white', borderRadius: '99px',
+    fontSize: '11px', fontWeight: 800,
+    padding: '1px 7px',
   },
+  clearCartBtn: {
+    background: 'none', border: '1px solid #fecaca', borderRadius: '7px',
+    color: '#ef4444', fontSize: '12px', fontWeight: 600,
+    padding: '3px 8px', cursor: 'pointer',
+  },
+
   emptyCart: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    padding: '3rem 1rem',
-    fontSize: '15px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1, display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    padding: '2rem', textAlign: 'center',
   },
+
+  cartItems: { flex: 1, overflowY: 'auto', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' },
   cartItem: {
-    padding: '1rem',
-    borderBottom: '1px solid #e5e7eb',
-    transition: 'background-color 0.2s',
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    padding: '0.625rem 0.75rem', background: '#f8fafc',
+    borderRadius: '10px', border: '1px solid #f1f5f9',
   },
-  cartItemInfo: {
-    marginBottom: '0.75rem',
-  },
-  cartItemName: {
-    fontWeight: '600',
-    fontSize: '14px',
-    color: '#1e293b',
-    marginBottom: '0.25rem',
-  },
-  cartItemPrice: {
-    fontSize: '13px',
-    color: '#64748b',
-    marginTop: '0.25rem',
-  },
-  cartItemActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    marginBottom: '0.5rem',
-  },
+  cartItemName: { flex: 1, minWidth: 0 },
+  cartQtyRow: { display: 'flex', alignItems: 'center', gap: '0.25rem' },
   qtyBtn: {
-    padding: '0.5rem',
-    border: '2px solid #e5e7eb',
-    backgroundColor: 'white',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    transition: 'all 0.2s',
+    width: '26px', height: '26px', borderRadius: '7px',
+    border: '1.5px solid #e2e8f0', background: 'white',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', color: '#64748b',
   },
-  qtyInput: {
-    width: '60px',
-    padding: '0.5rem',
-    border: '2px solid #e5e7eb',
-    borderRadius: '6px',
-    textAlign: 'center',
-    fontSize: '14px',
-    fontWeight: '600',
+  qtyNum: { fontSize: '14px', fontWeight: 700, color: '#0f172a', minWidth: '24px', textAlign: 'center' },
+  cartItemTotal: { fontSize: '13px', fontWeight: 700, color: '#0f172a', minWidth: '60px', textAlign: 'right' },
+  removeBtn: {
+    background: 'none', border: 'none', cursor: 'pointer',
+    color: '#ef4444', padding: '4px', display: 'flex',
   },
-  deleteBtn: {
-    padding: '0.5rem',
-    marginLeft: 'auto',
-  },
-  cartItemTotal: {
-    textAlign: 'right',
-    fontWeight: '700',
-    fontSize: '16px',
-    color: 'var(--primary-color, #2563eb)',
-  },
-  cartFooter: {
-    borderTop: '2px solid var(--border-color, #e5e7eb)',
-    paddingTop: '1rem',
-  },
-  total: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '16px',
-    fontWeight: '600',
-    marginBottom: '1rem',
-    color: 'var(--text-primary, #1e293b)',
-  },
-  totalAmount: {
-    color: 'var(--primary-color, #2563eb)',
-    fontSize: '24px',
-    fontWeight: '700',
-  },
-  loadingContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '400px',
-    textAlign: 'center',
-  },
-  errorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '400px',
-    textAlign: 'center',
-    padding: '2rem',
+
+  cartFooter: { borderTop: '1px solid #f1f5f9', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' },
+  totalRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  totalAmount: { fontSize: '18px', fontWeight: 800, color: '#10b981' },
+  gstNote: { fontSize: '10px', color: '#94a3b8' },
+  checkoutBtn: {
+    width: '100%', padding: '0.875rem',
+    background: 'linear-gradient(135deg,#10b981,#059669)',
+    color: 'white', border: 'none', borderRadius: '12px',
+    fontSize: '15px', fontWeight: 800, cursor: 'pointer',
+    boxShadow: '0 4px 14px rgba(16,185,129,0.35)',
   },
 };

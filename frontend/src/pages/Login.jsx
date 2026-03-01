@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getText, getBilingual } from '../utils/translations';
-import { LogIn } from 'lucide-react';
+import { LogIn, Zap, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [language, setLanguage] = useState('en');
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     const result = await login(username, password);
-    
     if (result.success) {
       navigate(from, { replace: true });
     } else {
@@ -33,62 +29,131 @@ export default function Login() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <LogIn size={56} color="#2563eb" />
-          <h1 style={styles.title}>Senthur Billing</h1>
-          <p style={styles.subtitle}>{getText('Sign in to continue', language)}</p>
+    <div style={styles.page}>
+      {/* Animated background orbs */}
+      <div style={styles.orb1} />
+      <div style={styles.orb2} />
+      <div style={styles.orb3} />
+
+      <div style={styles.wrapper}>
+        {/* Left panel — branding */}
+        <div style={styles.brandPanel}>
+          <div style={styles.brandContent}>
+            <div style={styles.brandIconWrap}>
+              <Zap size={40} color="#fff" />
+            </div>
+            <h1 style={styles.brandTitle}>Smart Energy<br />Solutions</h1>
+            <p style={styles.brandTagline}>
+              Perfect Home Essential Products
+            </p>
+            <div style={styles.productList}>
+              {[
+                { emoji: '📹', label: 'CCTV Cameras' },
+                { emoji: '☀️', label: 'Solar Water Heaters' },
+                { emoji: '⚡', label: 'Inverters & Batteries' },
+                { emoji: '💡', label: 'Solar Street Lights' },
+              ].map(item => (
+                <div key={item.label} style={styles.productItem}>
+                  <span style={styles.productEmoji}>{item.emoji}</span>
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {error && (
-            <div style={styles.error}>{error}</div>
-          )}
+        {/* Right panel — login form */}
+        <div style={styles.formPanel}>
+          <div style={styles.card}>
+            <div style={styles.cardHeader}>
+              <div style={styles.cardIconWrap}>
+                <LogIn size={24} color="#2563eb" />
+              </div>
+              <h2 style={styles.cardTitle}>Sign In</h2>
+              <p style={styles.cardSubtitle}>Welcome back! Enter your credentials.</p>
+            </div>
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>{getText('Username', language)}</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
-              placeholder={getText('Enter username', language)}
-              required
-              autoFocus
-              disabled={loading}
-            />
-          </div>
+            <form onSubmit={handleSubmit} style={styles.form}>
+              {error && (
+                <div style={styles.errorBox}>
+                  <span>⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>{getText('Password', language)}</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
-              placeholder={getText('Enter password', language)}
-              required
-              disabled={loading}
-            />
-          </div>
+              <div style={styles.fieldGroup}>
+                <label style={styles.label}>Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  style={styles.input}
+                  placeholder="Enter your username"
+                  required
+                  autoFocus
+                  disabled={loading}
+                />
+              </div>
 
-          <button
-            type="submit"
-            style={styles.button}
-            disabled={loading}
-          >
-            {loading ? getText('Loading', language) + '...' : getText('Sign In', language)}
-          </button>
-        </form>
+              <div style={styles.fieldGroup}>
+                <label style={styles.label}>Password</label>
+                <div style={styles.passwordWrapper}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={{ ...styles.input, paddingRight: '3rem' }}
+                    placeholder="Enter your password"
+                    required
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={styles.eyeBtn}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
 
-        <div style={styles.demoInfo}>
-          <p style={styles.demoTitle}>Demo Credentials:</p>
-          <div style={styles.demoItem}>
-            <strong>{getText('Admin', language)}:</strong> admin / admin123
-          </div>
-          <div style={styles.demoItem}>
-            <strong>{getText('Cashier', language)}:</strong> cashier1 / cashier123
+              <button
+                type="submit"
+                style={{
+                  ...styles.submitBtn,
+                  opacity: loading ? 0.75 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span style={styles.spinnerSmall} />
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={18} />
+                    Sign In
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div style={styles.credentialsBox}>
+              <p style={styles.credTitle}>Demo Credentials</p>
+              <div style={styles.credGrid}>
+                <div style={styles.credItem}>
+                  <span style={styles.credRole}>Admin</span>
+                  <code style={styles.credCode}>admin / admin123</code>
+                </div>
+                <div style={styles.credItem}>
+                  <span style={styles.credRole}>Cashier</span>
+                  <code style={styles.credCode}>cashier1 / cashier123</code>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -97,91 +162,164 @@ export default function Login() {
 }
 
 const styles = {
-  container: {
+  page: {
     minHeight: '100vh',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f2027 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: '1rem',
+    padding: '1.5rem',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-    padding: '2.5rem',
+  // decorative blobs
+  orb1: {
+    position: 'absolute', top: '-120px', right: '-80px',
+    width: '500px', height: '500px', borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(14,165,233,0.2) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  orb2: {
+    position: 'absolute', bottom: '-100px', left: '-60px',
+    width: '400px', height: '400px', borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  orb3: {
+    position: 'absolute', top: '50%', left: '50%',
+    transform: 'translate(-50%,-50%)',
+    width: '800px', height: '800px', borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 60%)',
+    pointerEvents: 'none',
+  },
+
+  wrapper: {
+    display: 'flex',
     width: '100%',
-    maxWidth: '450px',
+    maxWidth: '900px',
+    minHeight: '560px',
+    borderRadius: '24px',
+    overflow: 'hidden',
+    boxShadow: '0 40px 80px rgba(0,0,0,0.5)',
+    position: 'relative',
+    zIndex: 1,
   },
-  header: {
-    textAlign: 'center',
-    marginBottom: '2rem',
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginTop: '1rem',
-  },
-  subtitle: {
-    color: '#6b7280',
-    marginTop: '0.5rem',
-  },
-  form: {
+
+  // ── Brand panel ──
+  brandPanel: {
+    flex: '1',
+    background: 'linear-gradient(135deg, #0ea5e9, #2563eb, #7c3aed)',
     display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '3rem 2.5rem',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  error: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b',
-    padding: '0.75rem',
-    borderRadius: '4px',
-    fontSize: '14px',
+  brandContent: { position: 'relative', zIndex: 1 },
+  brandIconWrap: {
+    width: '72px', height: '72px',
+    background: 'rgba(255,255,255,0.2)',
+    borderRadius: '20px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    marginBottom: '1.5rem',
+    backdropFilter: 'blur(8px)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
   },
-  inputGroup: {
+  brandTitle: {
+    fontSize: '32px', fontWeight: '800',
+    color: 'white', lineHeight: 1.2, marginBottom: '0.75rem',
+  },
+  brandTagline: {
+    color: 'rgba(255,255,255,0.8)', fontSize: '14px',
+    marginBottom: '2rem', lineHeight: 1.5,
+  },
+  productList: { display: 'flex', flexDirection: 'column', gap: '0.875rem' },
+  productItem: {
+    display: 'flex', alignItems: 'center', gap: '0.75rem',
+    color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: '500',
+    background: 'rgba(255,255,255,0.1)',
+    padding: '0.625rem 1rem', borderRadius: '10px',
+    backdropFilter: 'blur(4px)',
+    border: '1px solid rgba(255,255,255,0.15)',
+  },
+  productEmoji: { fontSize: '18px' },
+
+  // ── Form panel ──
+  formPanel: {
+    width: '380px',
+    backgroundColor: '#f8fafc',
     display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2.5rem 2rem',
   },
-  label: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#374151',
+  card: { width: '100%' },
+  cardHeader: { marginBottom: '1.75rem' },
+  cardIconWrap: {
+    width: '48px', height: '48px',
+    background: '#dbeafe', borderRadius: '14px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    marginBottom: '1rem',
   },
+  cardTitle: { fontSize: '22px', fontWeight: '800', color: '#0f172a', marginBottom: '0.25rem' },
+  cardSubtitle: { color: '#64748b', fontSize: '13px' },
+
+  form: { display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' },
+
+  errorBox: {
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    background: '#fee2e2', color: '#991b1b',
+    padding: '0.75rem 1rem', borderRadius: '10px',
+    fontSize: '13px', fontWeight: '500',
+    border: '1px solid #fecaca',
+  },
+
+  fieldGroup: { display: 'flex', flexDirection: 'column', gap: '0.4rem' },
+  label: { fontSize: '13px', fontWeight: '600', color: '#374151' },
   input: {
-    padding: '0.75rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '4px',
-    fontSize: '14px',
-    outline: 'none',
+    padding: '0.75rem 1rem', border: '1.5px solid #e2e8f0',
+    borderRadius: '10px', fontSize: '14px',
+    background: 'white', color: '#0f172a',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+    width: '100%',
   },
-  button: {
-    backgroundColor: '#2563eb',
-    color: 'white',
-    padding: '1rem',
-    borderRadius: '8px',
-    border: 'none',
-    fontSize: '17px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-    transition: 'background-color 0.2s',
+
+  passwordWrapper: { position: 'relative' },
+  eyeBtn: {
+    position: 'absolute', right: '0.75rem', top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none', border: 'none',
+    cursor: 'pointer', color: '#64748b', padding: '0.25rem',
+    display: 'flex', alignItems: 'center',
   },
-  demoInfo: {
-    marginTop: '2rem',
-    padding: '1rem',
-    backgroundColor: '#f9fafb',
-    borderRadius: '4px',
-    fontSize: '14px',
+
+  submitBtn: {
+    width: '100%', padding: '0.875rem',
+    background: 'linear-gradient(135deg, #0ea5e9, #2563eb)',
+    color: 'white', border: 'none', borderRadius: '12px',
+    fontSize: '15px', fontWeight: '700',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+    boxShadow: '0 4px 14px rgba(37,99,235,0.35)',
+    transition: 'all 0.2s',
   },
-  demoTitle: {
-    fontWeight: '600',
-    marginBottom: '0.5rem',
-    color: '#374151',
+
+  spinnerSmall: {
+    display: 'inline-block',
+    width: '16px', height: '16px',
+    border: '2px solid rgba(255,255,255,0.4)',
+    borderTopColor: 'white', borderRadius: '50%',
+    animation: 'spin 0.7s linear infinite',
   },
-  demoItem: {
-    padding: '0.25rem 0',
-    color: '#6b7280',
+
+  credentialsBox: {
+    background: '#f1f5f9', borderRadius: '12px',
+    padding: '1rem', border: '1px solid #e2e8f0',
   },
+  credTitle: { fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '0.625rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  credGrid: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
+  credItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  credRole: { fontSize: '12px', fontWeight: '600', color: '#374151' },
+  credCode: { fontSize: '11px', background: '#e2e8f0', padding: '0.2rem 0.5rem', borderRadius: '6px', color: '#1e293b' },
 };

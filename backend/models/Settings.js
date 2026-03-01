@@ -6,7 +6,7 @@ const settingsSchema = new mongoose.Schema(
     shopName: {
       type: String,
       required: true,
-      default: 'Senthur Billing',
+      default: 'Smart Energy Solutions',
       trim: true,
     },
     shopAddress1: {

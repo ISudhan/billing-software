@@ -11,8 +11,10 @@ const getDailySales = async (req, res, next) => {
     const { date } = req.query;
     
     const targetDate = date ? new Date(date) : new Date();
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const [sales, billCount] = await Promise.all([
       Bill.aggregate([
@@ -25,8 +27,9 @@ const getDailySales = async (req, res, next) => {
         {
           $group: {
             _id: null,
-            totalSales: { $sum: '$total' },
+            totalRevenue: { $sum: '$total' },
             totalBills: { $sum: 1 },
+            totalItems: { $sum: { $sum: '$items.quantity' } },
           },
         },
       ]),
@@ -36,14 +39,15 @@ const getDailySales = async (req, res, next) => {
       }),
     ]);
 
-    const summary = sales[0] || { totalSales: 0, totalBills: 0 };
+    const summary = sales[0] || { totalRevenue: 0, totalBills: 0, totalItems: 0 };
 
     res.status(200).json({
       success: true,
-      date: targetDate.toISOString().split('T')[0],
+      date: startOfDay.toISOString().split('T')[0],
       summary: {
-        totalSales: summary.totalSales,
+        totalRevenue: summary.totalRevenue,
         totalBills: summary.totalBills,
+        totalItems: summary.totalItems,
         totalBillsIncludingVoided: billCount,
       },
     });

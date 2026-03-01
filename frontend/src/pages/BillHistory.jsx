@@ -260,8 +260,9 @@ export default function BillHistory() {
         <div className="print-area" style={styles.printArea}>
           <div style={styles.printContent}>
             <div style={styles.printHeader}>
-              <h2>Senthur Billing</h2>
-              <p>Shop Address</p>
+              <h2>Smart Energy Solutions</h2>
+              <p>Visit us for Perfect home essential products</p>
+              <p>CCTV Cameras | Solar Water Heaters | Inverters &amp; Batteries | Solar Street Lights</p>
             </div>
             <div style={styles.printInfo}>
               <p>Bill: {selectedBill.billNumber}</p>

@@ -64,7 +64,7 @@ const createUser = async (req, res, next) => {
       username,
       password,
       name,
-      role: role || 'STAFF',
+      role: role || 'CASHIER',
     });
 
     // Log audit action

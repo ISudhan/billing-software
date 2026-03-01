@@ -14,7 +14,7 @@ const getProducts = async (req, res, next) => {
     const filter = {};
     
     // Staff can only see active products
-    if (req.user.role === 'STAFF') {
+    if (req.user.role === 'CASHIER') {
       filter.isActive = true;
     } else if (isActive !== undefined) {
       filter.isActive = isActive === 'true';

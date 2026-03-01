@@ -283,4 +283,33 @@ export const staffPaymentAPI = {
   },
 };
 
+// =========================
+// STOCK APIs
+// =========================
+export const stockAPI = {
+  // Get full stock list
+  getStockList: async (params = {}) => {
+    const response = await api.get('/stock', { params });
+    return response.data;
+  },
+
+  // Get low-stock / out-of-stock alerts
+  getAlerts: async () => {
+    const response = await api.get('/stock/alerts');
+    return response.data;
+  },
+
+  // Get stock ledger for a product
+  getProductLedger: async (productId, params = {}) => {
+    const response = await api.get(`/stock/${productId}/ledger`, { params });
+    return response.data;
+  },
+
+  // Manual stock adjustment (admin)
+  adjustStock: async (productId, quantity, note) => {
+    const response = await api.post(`/stock/${productId}/adjust`, { quantity, note });
+    return response.data;
+  },
+};
+
 export default api;

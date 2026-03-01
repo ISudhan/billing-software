@@ -17,6 +17,7 @@ const billRoutes = require('./routes/billRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const staffPaymentRoutes = require('./routes/staffPaymentRoutes');
+const stockRoutes = require('./routes/stockRoutes');
 
 // Initialize express app
 const app = express();
@@ -76,6 +77,7 @@ app.use('/api/bills', billRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/staff-payments', staffPaymentRoutes);
+app.use('/api/stock', stockRoutes);
 
 // 404 handler
 app.use(notFound);
@@ -88,7 +90,7 @@ const PORT = config.port;
 const server = app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════╗
-║   🏪 Senthur Billing Backend Server       ║
+║   ⚡ Smart Energy Solutions - Billing     ║
 ╠════════════════════════════════════════════╣
 ║   Environment: ${config.env.padEnd(28)} ║
 ║   Port: ${PORT.toString().padEnd(35)} ║

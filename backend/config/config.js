@@ -4,7 +4,7 @@ module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 5000,
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/senthur_billing',
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/smart_energy_billing',
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback-secret-change-in-production',
@@ -24,7 +24,7 @@ module.exports = {
     name: process.env.ADMIN_NAME || 'Administrator',
   },
   shop: {
-    name: process.env.SHOP_NAME || 'Senthur Billing',
+    name: process.env.SHOP_NAME || 'Smart Energy Solutions',
     billPrefix: process.env.BILL_PREFIX || 'BILL',
   },
 };

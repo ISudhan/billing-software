@@ -16,6 +16,7 @@ import ProductManagement from './pages/ProductManagement';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import StaffManagement from './pages/StaffManagement';
+import StockManagement from './pages/StockManagement';
 
 function App() {
   return (
@@ -111,6 +112,16 @@ function App() {
               <AdminRoute>
                 <Layout>
                   <StaffManagement />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/stock"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <StockManagement />
                 </Layout>
               </AdminRoute>
             }

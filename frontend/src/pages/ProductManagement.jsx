@@ -114,12 +114,12 @@ export default function ProductManagement() {
   };
 
   const toggleEnabled = async (product) => {
-    const action = product.enabled ? 'disable' : 'enable';
-    const actionTamil = product.enabled ? 'முடக்கு' : 'செயல்படுத்து';
+    const action = product.isActive ? 'disable' : 'enable';
+    const actionTamil = product.isActive ? 'முடக்கு' : 'செயல்படுத்து';
     
     if (window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} "${product.name}"? / ${actionTamil} "${product.nameTamil}"?`)) {
       try {
-        await productAPI.updateProduct(product._id, { enabled: !product.enabled });
+        await productAPI.updateProduct(product._id, { isActive: !product.isActive });
         await refreshProducts();
       } catch (error) {
         console.error('Failed to toggle product:', error);
@@ -134,7 +134,7 @@ export default function ProductManagement() {
       nameTamil: '',
       price: 0,
       category: 'Groceries',
-      enabled: true,
+      isActive: true,
       imageUrl: '',
     };
     setEditingProduct(newProduct);
@@ -267,11 +267,12 @@ export default function ProductManagement() {
                     onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                     style={styles.input}
                   >
-                    <option value="Groceries">Groceries</option>
-                    <option value="Beverages">Beverages</option>
-                    <option value="Snacks">Snacks</option>
-                    <option value="Dairy">Dairy</option>
-                    <option value="Others">Others</option>
+                    <option value="CCTV Cameras">CCTV Cameras</option>
+                    <option value="Solar Water Heaters">Solar Water Heaters</option>
+                    <option value="Inverters">Inverters</option>
+                    <option value="Batteries">Batteries</option>
+                    <option value="Solar Street Lights">Solar Street Lights</option>
+                    <option value="Accessories">Accessories</option>
                   </select>
                 </div>
               </div>
@@ -289,7 +290,6 @@ export default function ProductManagement() {
                   onClick={showAddForm ? handleCancelAdd : handleCancel}
                   style={styles.cancelBtn}
                   disabled={isSaving}
-                >
                 >
                   <X size={18} />
                   {getText('Cancel', language)}
@@ -337,10 +337,10 @@ export default function ProductManagement() {
                 </div>
                 <span style={{
                   ...styles.statusBadge,
-                  backgroundColor: product.enabled ? '#dcfce7' : '#fee2e2',
-                  color: product.enabled ? '#15803d' : '#b91c1c',
+                  backgroundColor: product.isActive ? '#dcfce7' : '#fee2e2',
+                  color: product.isActive ? '#15803d' : '#b91c1c',
                 }}>
-                  {product.enabled ? getText('Active', language) : getText('Disabled', language)}
+                  {product.isActive ? getText('Active', language) : getText('Disabled', language)}
                 </span>
               </div>
 
@@ -364,11 +364,11 @@ export default function ProductManagement() {
                   onClick={() => toggleEnabled(product)}
                   style={{
                     ...styles.toggleBtn,
-                    backgroundColor: product.enabled ? '#fef3c7' : '#dcfce7',
-                    color: product.enabled ? '#92400e' : '#15803d',
+                    backgroundColor: product.isActive ? '#fef3c7' : '#dcfce7',
+                    color: product.isActive ? '#92400e' : '#15803d',
                   }}
                 >
-                  {product.enabled ? getText('Disable', language) : getText('Enable', language)}
+                  {product.isActive ? getText('Disable', language) : getText('Enable', language)}
                 </button>
                 {user?.role === ROLES.ADMIN && (
                   <button onClick={() => handleDelete(product)} style={styles.deleteBtn}>
