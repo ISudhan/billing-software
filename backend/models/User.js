@@ -44,7 +44,6 @@ const userSchema = new mongoose.Schema(
 );
 
 // Index for faster queries
-userSchema.index({ username: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 
 // Hash password before saving

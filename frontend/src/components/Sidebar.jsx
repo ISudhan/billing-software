@@ -140,7 +140,7 @@ const styles = {
     background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
     display: 'flex', flexDirection: 'column',
     transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
-    zIndex: 900,
+    zIndex: 1001,
     overflowY: 'auto',
     boxShadow: '4px 0 20px rgba(0,0,0,0.25)',
     borderRight: '1px solid rgba(255,255,255,0.06)',

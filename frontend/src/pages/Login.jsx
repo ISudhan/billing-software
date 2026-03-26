@@ -141,7 +141,7 @@ export default function Login() {
               </button>
             </form>
 
-            <div style={styles.credentialsBox}>
+            {/* <div style={styles.credentialsBox}>
               <p style={styles.credTitle}>Demo Credentials</p>
               <div style={styles.credGrid}>
                 <div style={styles.credItem}>
@@ -153,7 +153,7 @@ export default function Login() {
                   <code style={styles.credCode}>cashier1 / cashier123</code>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

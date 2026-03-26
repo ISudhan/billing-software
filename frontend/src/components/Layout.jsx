@@ -58,7 +58,7 @@ export default function Layout({ children }) {
               <div style={styles.brandIcon}>
                 <Zap size={18} color="white" />
               </div>
-              <div>
+              <div className="header-brand-text">
                 <div style={styles.brandName}>Smart Energy Solutions</div>
                 <div style={styles.brandSubtitle}>Billing System</div>
               </div>
@@ -88,7 +88,7 @@ export default function Layout({ children }) {
               <div style={styles.userAvatar}>
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
-              <div style={styles.userDetails}>
+              <div style={styles.userDetails} className="header-user-name">
                 <div style={styles.userName}>{user?.name}</div>
                 <div style={styles.userRole}>{user?.role}</div>
               </div>
@@ -135,7 +135,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '0 1.25rem',
-    zIndex: 900,
+    zIndex: 1002,
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '1rem' },
@@ -213,9 +213,10 @@ const styles = {
 
   overlay: {
     position: 'fixed', inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: 950,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 1000,
     backdropFilter: 'blur(2px)',
+    WebkitBackdropFilter: 'blur(2px)',
   },
 };
 

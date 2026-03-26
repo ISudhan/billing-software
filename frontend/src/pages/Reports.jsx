@@ -73,7 +73,7 @@ export default function Reports() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>{getText('Reports', language)}</h1>
-        <div style={styles.headerControls}>
+        <div style={styles.headerControls} className="reports-header-controls">
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
@@ -127,7 +127,7 @@ export default function Reports() {
       {!loading && !error && reportData && (
         <>
       {/* Summary Cards */}
-      <div style={styles.summaryGrid}>
+      <div style={styles.summaryGrid} className="reports-summary-grid">
         <div style={styles.summaryCard}>
           <div style={{ ...styles.cardIcon, backgroundColor: '#dbeafe' }}>
             <DollarSign size={24} color="#2563eb" />
@@ -169,7 +169,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div style={styles.reportsGrid}>
+      <div style={styles.reportsGrid} className="reports-grid">
         {/* Payment Breakdown */}
         <div style={styles.reportCard}>
           <h2 style={styles.reportTitle}>Payment Method Breakdown</h2>
@@ -252,7 +252,6 @@ export default function Reports() {
               </div>
               );
             })}
-            ))}
           </div>
         </div>
 

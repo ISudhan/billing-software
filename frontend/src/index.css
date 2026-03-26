@@ -766,7 +766,7 @@ main {
 
   .sidebar {
     position: fixed !important;
-    z-index: 1000 !important;
+    z-index: 1001 !important;
   }
 
   h1 {
@@ -781,6 +781,7 @@ main {
 @media (max-width: 768px) {
   main {
     padding: var(--space-md);
+    padding-top: 4.5rem !important;
   }
 
   .btn {
@@ -794,6 +795,86 @@ main {
 
   .pos-product-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  /* Make tables scrollable on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Reports grid: single column on mobile */
+  .reports-grid,
+  [style*="gridTemplateColumns: 'repeat(auto-fit, minmax(400px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Summary cards: 2-column grid on mobile */
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Home grids responsive */
+  .home-stats-grid,
+  .home-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  main {
+    padding: 0.75rem;
+    padding-top: 4.5rem !important;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  /* Single column on very small screens */
+  .home-stats-grid,
+  .home-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Header: hide user name text on very small screens */
+  .header-user-name,
+  .header-brand-text {
+    display: none;
+  }
+
+  /* Reports summary: 2-col on phones */
+  [style*="gridTemplateColumns: 'repeat(auto-fit, minmax(250px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .pos-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ─── Reports Mobile Responsive ─────────────────────────────── */
+@media (max-width: 768px) {
+  .reports-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .reports-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.875rem !important;
+  }
+
+  .reports-header-controls {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .reports-summary-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
