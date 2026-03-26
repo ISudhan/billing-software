@@ -29,10 +29,12 @@ connectDB();
 app.use(helmet());
 
 // CORS configuration
+const allowedOrigins = config.env === 'production'
+  ? (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
+  : ['http://localhost:3000', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: config.env === 'production' 
-    ? ['https://yourdomain.com'] // Update with your frontend domain
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: allowedOrigins,
   credentials: true,
 }));
 

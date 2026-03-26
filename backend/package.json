@@ -1,7 +1,7 @@
 {
-  "name": "senthur-billing-backend",
+  "name": "smart-energy-solutions-backend",
   "version": "1.0.0",
-  "description": "Production-ready backend for high-speed cafe billing system",
+  "description": "Production-ready backend for Smart Energy Solutions billing system",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
