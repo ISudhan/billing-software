@@ -1,10 +1,14 @@
 require('dotenv').config();
 
+if (!process.env.MONGODB_URI) {
+  throw new Error("❌ MONGODB_URI is not defined in environment variables");
+}
+
 module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 5000,
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/smart_energy_billing',
+    uri: process.env.MONGODB_URI,
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback-secret-change-in-production',
