@@ -1145,3 +1145,127 @@ main {
 .grow {
   flex: 1;
 }
+/* ═══════════════════════════════════════════════════════════
+   COMPREHENSIVE RESPONSIVE OVERRIDES — All Pages All Screens
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ───────────────────────────────────────── */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Page header row (title + actions) ──────────────────── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.page-header h1, .page-header h2 { margin: 0; min-width: 0; }
+
+/* ── Filters / toolbar row ──────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+.filter-bar input, .filter-bar select {
+  min-width: 0;
+  flex: 1 1 160px;
+  max-width: 300px;
+}
+
+/* ── Form grids ─────────────────────────────────────────── */
+.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+.stats-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+/* ── Split panel ────────────────────────────────────────── */
+.split-panel { display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; align-items: start; }
+
+/* ── Billing split ──────────────────────────────────────── */
+.billing-split { display: grid; grid-template-columns: 1fr 340px; gap: 1.25rem; align-items: start; }
+
+/* ── Payment mode grid ──────────────────────────────────── */
+.payment-mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+/* ── Data table wrapper ─────────────────────────────────── */
+.table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-lg); }
+.table-wrapper table { min-width: 580px; width: 100%; }
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modal-box { background: white; border-radius: var(--radius-xl); padding: 2rem; width: 100%; max-width: 560px; box-shadow: var(--shadow-xl); position: relative; }
+
+/* ── Card grid ──────────────────────────────────────────── */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+/* ═══════════════════
+   TABLET  ≤ 1024px
+   ═══════════════════ */
+@media (max-width: 1024px) {
+  .billing-split { grid-template-columns: 1fr !important; }
+  .split-panel { grid-template-columns: 1fr !important; }
+  .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .modal-box { max-width: 95vw; padding: 1.5rem; }
+  .filter-bar input, .filter-bar select { max-width: 100%; }
+}
+
+/* ═══════════════════
+   MOBILE  ≤ 768px
+   ═══════════════════ */
+@media (max-width: 768px) {
+  .layout-main { padding: 72px 0.875rem 1rem !important; }
+  .page-container { gap: 1rem; }
+  .form-grid-2 { grid-template-columns: 1fr !important; }
+  .stats-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .payment-mode-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .card-grid { grid-template-columns: 1fr !important; }
+  .page-header .btn { padding: 0.55rem 0.875rem; font-size: 13px; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar input, .filter-bar select { max-width: 100%; flex: 1 1 auto; }
+  .modal-box { max-width: 100%; border-radius: var(--radius-lg); padding: 1.25rem; margin: 0 0.5rem; }
+  .table-wrapper table { min-width: 520px; }
+  .pos-product-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; }
+}
+
+/* ═══════════════════
+   SMALL PHONE ≤ 480px
+   ═══════════════════ */
+@media (max-width: 480px) {
+  .layout-main { padding: 68px 0.625rem 0.75rem !important; }
+  h1 { font-size: 19px !important; }
+  h2 { font-size: 17px !important; }
+  h3 { font-size: 15px !important; }
+  .stats-grid-3, .stats-grid-4 { grid-template-columns: 1fr !important; }
+  .payment-mode-grid { grid-template-columns: 1fr !important; }
+  .btn { padding: 0.55rem 0.875rem; font-size: 13px; }
+  .btn-lg { padding: 0.7rem 1.25rem; font-size: 14px; }
+  .pos-product-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .modal-box { margin: 0; border-radius: var(--radius-md); }
+  .stat-card { padding: 1rem !important; }
+  .stat-card .stat-value { font-size: 22px !important; }
+}
+
+/* ═══════════════════════
+   LARGE DESKTOP ≥ 1440px
+   ═══════════════════════ */
+@media (min-width: 1440px) {
+  .page-container { max-width: 1600px; }
+  .stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .billing-split { grid-template-columns: 1fr 400px; }
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT MAIN — sidebar offset (desktop)
+   ═══════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  .layout-main { margin-left: 260px; padding: 80px 2rem 2rem !important; }
+}
